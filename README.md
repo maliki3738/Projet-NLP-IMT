@@ -1,4 +1,6 @@
-# Projet NLP
+# Projet NLP — Projet-NLP-IMT
+
+Dépôt du Projet NLP pour les étudiants de l'IMT Dakar.
 
 Brève description: projet de traitement du langage naturel (NLP) réalisé en collaboration.
 
@@ -7,7 +9,7 @@ Installation rapide:
 1. Cloner le dépôt:
 
 ```bash
-git clone <URL_DU_DEPOT>
+git clone https://github.com/maliki3738/Projet-NLP-IMT.git
 cd Projet
 ```
 
@@ -31,3 +33,4 @@ Bonnes pratiques:
 - Ne poussez pas l'environnement virtuel (`venv`) ni les fichiers temporaires.
 
 Contact: invitez vos coéquipiers via GitHub (Settings → Collaborators) ou utilisez la CLI `gh`.
+
