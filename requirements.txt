@@ -1,0 +1,7 @@
+langchain
+chainlit
+google-generativeai
+redis
+langfuse
+python-dotenv
+beautifulsoup4
