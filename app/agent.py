@@ -9,6 +9,8 @@ from langchain.tools import Tool
 load_dotenv()
 
 # ======================
+
+
 # 1. Configuration du LLM (Gemini)
 # ======================
 llm = ChatGoogleGenerativeAI(
