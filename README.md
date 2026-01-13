@@ -1,36 +1,15 @@
-# Projet NLP — Projet-NLP-IMT
+# IMT AI Agent
 
-Dépôt du Projet NLP pour les étudiants de l'IMT Dakar.
+Agent conversationnel basé sur LLM capable de :
+- Répondre aux questions sur l’IMT (formations, frais, localisation)
+- Remplir le formulaire de contact ou envoyer un email au Directeur
 
-Brève description: projet de traitement du langage naturel (NLP) réalisé en collaboration.
+## Stack
+- LLM : Gemini
+- Orchestration : LangChain / CrewAI
+- Interface : Chainlit
+- Mémoire : Redis
+- Observabilité : Langfuse
 
-Installation rapide:
-
-1. Cloner le dépôt:
-
-```bash
-git clone https://github.com/maliki3738/Projet-NLP-IMT.git
-cd Projet
-```
-
-2. Créer un environnement virtuel et installer les dépendances:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-Contribuer:
-
-- Créez une branche pour chaque fonctionnalité: `git checkout -b feat/ma-fonction`
-- Faites des commits clairs et poussez votre branche: `git push -u origin feat/ma-fonction`
-- Ouvrez une Pull Request sur GitHub et demandez une relecture.
-
-Bonnes pratiques:
-
-- Ajoutez les fichiers de données volumineux ailleurs (Git LFS ou stockage externe).
-- Ne poussez pas l'environnement virtuel (`venv`) ni les fichiers temporaires.
-
-Contact: invitez vos coéquipiers via GitHub (Settings → Collaborators) ou utilisez la CLI `gh`.
-
+## Installation
+À compléter
