@@ -98,7 +98,7 @@ def agent(question: str) -> str:
 
 
 if __name__ == "__main__":
-    print("🤖 Agent IMT prêt\n")
+    print("Agent IMT prêt\n")
     print(agent("Quels sont les frais de scolarité à l'IMT ?"))
     print("\n---\n")
     print(agent("Envoie un email au directeur pour demander des informations."))
