@@ -13,3 +13,9 @@ Agent conversationnel basé sur LLM capable de :
 
 ## Installation
 À compléter
+
+## Installation minimale
+
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt

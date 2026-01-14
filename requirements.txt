@@ -5,3 +5,5 @@ redis
 langfuse
 python-dotenv
 beautifulsoup4
+python-dotenv
+google-generativeai
