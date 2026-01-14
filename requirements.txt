@@ -1,9 +1,2 @@
-langchain
-chainlit
-google-generativeai
-redis
-langfuse
-python-dotenv
-beautifulsoup4
-python-dotenv
-google-generativeai
+python-dotenv==1.2.1
+google-generativeai==0.8.6
