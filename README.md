@@ -39,3 +39,5 @@ python -m app.agent
 - Le code actuel utilise un agent simple (décision `SEARCH` vs `EMAIL`) et appelle `app.tools` pour les actions.\
 - Pour passer à un système RAG / mémoire / UI, intégrer ces composants progressivement (retriever vectoriel, Redis, Chainlit).\
 - Si vous souhaitez, je peux ajouter une section ``Développement`` avec instructions pour tester et déboguer localement.
+
+Le module RAG utilise une indexation locale simplifiée (chunks + similarité textuelle), afin d’éviter les conflits de dépendances et garantir la stabilité du projet.

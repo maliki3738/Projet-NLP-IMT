@@ -94,11 +94,66 @@ def agent(question: str) -> str:
         # Appel de l'outil d'envoi d'email (doit être défini dans `app.tools`)
         return send_email(subject="Demande d'informations", content=question)
     # Par défaut, on appelle la recherche
-    return search_imt(question)
+    raw_context = search_imt(question)
+    return reformulate_answer(question, raw_context)
 
+IMT_KEYWORDS = [
+    "imt",
+    "institut",
+    "formation",
+    "formations",
+    "bachelor",
+    "edulab",
+    "filières",
+    "frais",
+    "inscription",
+    "admission",
+    "campus",
+    "dakar",
+    "adresse",
+    "localisation"
+]
+
+if not any(word in question.lower() for word in IMT_KEYWORDS):
+    return (
+        "Je suis un agent d'information sur l’IMT Dakar. "
+        "Pose-moi une question concernant l’institut, "
+        "ses formations, sa localisation ou ses activités."
+    )
+
+
+def reformulate_answer(question: str, context: str) -> str:
+    if not GENAI_AVAILABLE:
+        # Fallback simple si Gemini indisponible
+        return context
+
+    prompt = f"""
+Tu es un assistant clair et concis.
+
+À partir des informations suivantes extraites du site de l'IMT Dakar,
+réponds simplement et directement à la question.
+
+Question :
+{question}
+
+Informations :
+{context}
+
+Réponse attendue :
+- courte
+- claire
+- sans événements, dates ou bruit inutile
+"""
+
+    result = _call_gemini(prompt)
+    return result if result else context
 
 if __name__ == "__main__":
     print("Agent IMT prêt\n")
-    print(agent("Quels sont les frais de scolarité à l'IMT ?"))
-    print("\n---\n")
-    print(agent("Envoie un email au directeur pour demander des informations."))
+    while True:
+        question = input("Posez votre question à l'agent IMT (ou 'quit' pour quitter) : ")
+        if question.lower() == 'quit':
+            break
+        response = agent(question)
+        print(response)
+        print("\n---\n")
