@@ -16,23 +16,12 @@ memory = RedisMemory(host=redis_host, port=redis_port)
 async def start():
     """
     Called when a new chat session starts.
-    Loads conversation history from memory (Redis or RAM).
+    Chainlit handles message persistence automatically, so we don't need to manually reload history.
+    The memory is used for long-term persistence across sessions if needed.
     """
-    # Get session ID - try different ways for compatibility
-    try:
-        session_id = cl.user_session.get("id") or cl.user_session.get("session_id") or "default"
-    except:
-        session_id = "default"
-
-    # Load history if exists and replay previous messages
-    history = memory.get_history(session_id)
-    if history:
-        # Send history messages to restore conversation context
-        for msg in history:
-            if msg.startswith("user: "):
-                await cl.Message(author="user", content=msg[6:]).send()
-            elif msg.startswith("assistant: "):
-                await cl.Message(author="assistant", content=msg[11:]).send()
+    # Session initialization - Chainlit handles message history automatically
+    # The RedisMemory is used for cross-session persistence if Redis is available
+    pass
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -44,6 +33,21 @@ async def main(message: cl.Message):
         session_id = cl.user_session.get("id") or cl.user_session.get("session_id") or "default"
     except:
         session_id = "default"
+
+    # Special command to show full history
+    if message.content.lower().strip() == "/historique" or message.content.lower().strip() == "/history":
+        history = memory.get_history(session_id)
+        if history:
+            history_text = "**📜 Historique complet de la conversation :**\n\n"
+            for i, msg in enumerate(history, 1):
+                if msg.startswith("user: "):
+                    history_text += f"**Vous {i//2 + 1}:** {msg[6:]}\n"
+                elif msg.startswith("assistant: "):
+                    history_text += f"**Agent {i//2 + 1}:** {msg[11:]}\n"
+            await cl.Message(content=history_text).send()
+        else:
+            await cl.Message(content="Aucun historique trouvé pour cette session.").send()
+        return
 
     # Store user message in memory
     memory.add_message(session_id, "user", message.content)
