@@ -1,6 +1,7 @@
 python-dotenv==1.2.1
 google-generativeai==0.8.6
-python-dotenv
-google-generativeai
+redis==5.0.1
+chainlit==1.1.301
 requests
 beautifulsoup4
+>>>>>>> 5661efe (Configuration mémoire Redis et interface Chainlit en français)
