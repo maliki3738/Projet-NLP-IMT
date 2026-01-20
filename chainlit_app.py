@@ -13,8 +13,12 @@ memory = RedisMemory(host=redis_host, port=redis_port)
 
 @cl.on_chat_start
 async def start():
-    # Get session ID
-    session_id = cl.user_session.get("id")
+    # Get session ID - try different ways for compatibility
+    try:
+        session_id = cl.user_session.get("id") or cl.user_session.get("session_id") or "default"
+    except:
+        session_id = "default"
+    
     # Load history if exists
     history = memory.get_history(session_id)
     if history:
@@ -27,7 +31,10 @@ async def start():
 
 @cl.on_message
 async def main(message: cl.Message):
-    session_id = cl.user_session.get("id")
+    try:
+        session_id = cl.user_session.get("id") or cl.user_session.get("session_id") or "default"
+    except:
+        session_id = "default"
 
     # Add user message to memory
     memory.add_message(session_id, "user", message.content)

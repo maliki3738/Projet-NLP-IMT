@@ -97,29 +97,6 @@ def agent(question: str) -> str:
     raw_context = search_imt(question)
     return reformulate_answer(question, raw_context)
 
-IMT_KEYWORDS = [
-    "imt",
-    "institut",
-    "formation",
-    "formations",
-    "bachelor",
-    "edulab",
-    "filières",
-    "frais",
-    "inscription",
-    "admission",
-    "campus",
-    "dakar",
-    "adresse",
-    "localisation"
-]
-
-if not any(word in question.lower() for word in IMT_KEYWORDS):
-    return (
-        "Je suis un agent d'information sur l’IMT Dakar. "
-        "Pose-moi une question concernant l’institut, "
-        "ses formations, sa localisation ou ses activités."
-    )
 
 
 def reformulate_answer(question: str, context: str) -> str:
