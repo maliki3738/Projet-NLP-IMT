@@ -92,20 +92,20 @@ reaction_on_message_received = false
 
 [UI]
 # Name of the assistant.
-name = "Assistant"
+name = "Agent IMT Dakar"
 
 # default_theme = "dark"
 
 # Force a specific language for all users (e.g., "en-US", "he-IL", "fr-FR")
 # If not set, the browser's language will be used
-# language = "en-US"
+language = "fr-FR"
 
 # layout = "wide"
 
 # default_sidebar_state = "open"
 
 # Description of the assistant. This is used for HTML tags.
-# description = ""
+description = "Agent d'information intelligent pour l'Institut Mines-Télécom Dakar"
 
 # Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
 cot = "full"

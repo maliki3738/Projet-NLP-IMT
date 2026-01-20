@@ -1,14 +1,23 @@
-# Bienvenue sur Chainlit ! 🚀🤖
+# 🤖 Agent d'Information IMT Dakar
 
-Salut, Développeur ! 👋 Nous sommes ravis de vous accueillir. Chainlit est un outil puissant conçu pour vous aider à prototyper, déboguer et partager des applications basées sur les LLMs.
+Bienvenue sur l'**Agent Intelligent de l'Institut Mines-Télécom Dakar** ! 👋
 
-## Liens utiles 🔗
+Je suis votre assistant virtuel spécialisé dans les informations sur l'IMT Dakar. Je peux vous aider avec :
 
-- **Documentation :** Commencez avec notre [Documentation Chainlit](https://docs.chainlit.io) complète 📚
-- **Communauté Discord :** Rejoignez notre [Discord Chainlit](https://discord.gg/k73SQ3FyUh) amical pour poser des questions, partager vos projets et vous connecter avec d'autres développeurs ! 💬
+## 📚 Informations disponibles
+- **Formations** : Bachelor, Edulab, formations spécialisées
+- **Frais de scolarité** et conditions d'admission
+- **Localisation** et contact de l'institut
+- **Activités** et événements
 
-Nous avons hâte de voir ce que vous créerez avec Chainlit ! Bon codage ! 💻😊
+## 💬 Comment utiliser l'agent
+Posez-moi vos questions en français ou en anglais. Par exemple :
+- "Quels sont les frais de scolarité à l'IMT ?"
+- "Comment contacter le directeur ?"
+- "Quelles formations proposez-vous ?"
 
-## Écran de bienvenue
+L'agent garde en mémoire notre conversation pour un échange plus naturel !
 
-Pour modifier l'écran de bienvenue, éditez le fichier `chainlit.md` à la racine de votre projet. Si vous ne voulez pas d'écran de bienvenue, laissez simplement ce fichier vide.
+---
+
+*Développé avec Chainlit et IA générative*

@@ -1,13 +1,18 @@
 import redis
 
 class RedisMemory:
+    """
+    Memory management class with Redis backend and RAM fallback.
+    Stores conversation history per session for persistence across app restarts.
+    """
     def __init__(self, host='localhost', port=6379, db=0):
         try:
             self.r = redis.Redis(host=host, port=port, db=db)
             self.r.ping()  # Test connection
             self.redis_available = True
+            print("✅ Redis connecté - historique persistant disponible")
         except Exception:
-            print("Redis non disponible, utilisation de la mémoire en RAM.")
+            print("⚠️  Redis non disponible, utilisation de la mémoire en RAM.")
             self.redis_available = False
             self.memory = {}  # Fallback in-memory dict
 
