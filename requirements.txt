@@ -4,4 +4,6 @@ redis==5.0.1
 chainlit==1.1.301
 requests
 beautifulsoup4
->>>>>>> 5661efe (Configuration mémoire Redis et interface Chainlit en français)
+chainlit
+redis
+pydantic<2

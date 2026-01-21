@@ -41,4 +41,4 @@ class RedisMemory:
             self.r.delete(key)
         else:
             if session_id in self.memory:
-                self.memory[session_id] = []
+                self.memory[session_id] = []r
