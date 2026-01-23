@@ -41,3 +41,6 @@ python -m app.agent
 - Si vous souhaitez, je peux ajouter une section ``Développement`` avec instructions pour tester et déboguer localement.
 
 Le module RAG utilise une indexation locale simplifiée (chunks + similarité textuelle), afin d’éviter les conflits de dépendances et garantir la stabilité du projet.
+
+Python recommandé : 3.11 ou 3.12
+(Chainlit non compatible avec Python 3.13 à ce jour)
