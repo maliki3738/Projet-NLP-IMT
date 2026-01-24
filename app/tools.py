@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
 from difflib import get_close_matches
+from pathlib import Path
 
 # Configuration du logging
 logger = logging.getLogger(__name__)
@@ -15,11 +16,14 @@ logger = logging.getLogger(__name__)
 def search_imt(query: str) -> str:
     """Recherche des informations dans la base de données IMT.
     
+    Cette fonction analyse la question, identifie le fichier source pertinent,
+    et extrait les informations réelles des données scrapées.
+    
     Args:
         query: La question de recherche
         
     Returns:
-        Réponse trouvée ou message d'erreur approprié
+        Réponse extraite des données ou message d'erreur
     """
     if not query or not query.strip():
         logger.warning("Recherche avec query vide")
@@ -28,73 +32,118 @@ def search_imt(query: str) -> str:
     logger.debug(f"Recherche IMT pour: {query}")
     q_lower = query.lower()
     
-    # Chargement des données
-    try:
-        with open("data/chunks.json", "r", encoding="utf-8") as f:
-            chunks = json.load(f)
-        logger.debug(f"Chunks chargés: {len(chunks)} éléments")
-    except FileNotFoundError:
-        logger.error("Fichier chunks.json non trouvé")
-        return "Les données IMT ne sont pas encore indexées. Veuillez exécuter 'python scripts/build_index.py'."
-    except json.JSONDecodeError as e:
-        logger.error(f"Erreur de parsing JSON: {e}")
-        return "Erreur de lecture des données IMT."
-    except Exception as e:
-        logger.error(f"Erreur inattendue lors du chargement: {e}")
-        return "Une erreur s'est produite lors de la recherche."
+    # Chargement des fichiers texte sources
+    data_dir = Path("data")
     
-    # Exception pour les questions de localisation
-    location_keywords = ["où", "ou", "adresse", "localisation", "lieu", "emplacement", "situé", "trouve"]
-    if any(word in q_lower for word in location_keywords):
-        logger.debug("Détection question de localisation")
-        for chunk in chunks:
-            if chunk.get("source") == "contact.txt":
-                lines = chunk.get("content", "").split('\n')
-                for line in lines:
-                    if "avenue" in line.lower() or "dakar" in line.lower():
-                        logger.info(f"Adresse trouvée: {line.strip()[:50]}...")
-                        return line.strip()
-        logger.warning("Adresse non trouvée dans contact.txt")
-        return "Adresse non trouvée. Contactez l'IMT pour plus d'informations."
-
-    query_words = set(q_lower.split())
-    logger.debug(f"Mots de recherche: {query_words}")
+    # Mapping mots-clés -> fichiers sources
+    source_mapping = {
+        "formations.txt": ["formation", "bachelor", "programme", "diplôme", "étude", "cursus", "enseigne", "apprendre"],
+        "contact.txt": ["contact", "téléphone", "appeler", "joindre", "numéro", "adresse", "où", "ou", "localisation", "situé", "trouve"],
+        "Edulab.txt": ["edulab", "laboratoire", "espace", "expérimentation"],
+        "accueil.txt": ["événement", "actualité", "actu", "nouveau", "quoi de neuf", "news"]
+    }
     
-    # Trouver le chunk avec le plus de matches
-    best_chunk = None
-    max_matches = 0
-    for chunk in chunks:
-        content_lower = chunk.get("content", "").lower()
-        match_count = sum(1 for word in query_words if word in content_lower)
-        if match_count > max_matches:
-            max_matches = match_count
-            best_chunk = chunk
+    # Identifier le(s) fichier(s) pertinent(s)
+    relevant_sources = []
+    for source_file, keywords in source_mapping.items():
+        if any(keyword in q_lower for keyword in keywords):
+            relevant_sources.append(source_file)
     
-    if not best_chunk or max_matches == 0:
-        logger.info(f"Aucune correspondance pour: {query}")
-        return "Aucune information trouvée sur cette question. Essayez de reformuler ou contactez l'IMT directement."
+    # Si aucun fichier spécifique, chercher partout
+    if not relevant_sources:
+        relevant_sources = list(source_mapping.keys())
     
-    logger.debug(f"Meilleur chunk trouvé avec {max_matches} matches")
+    logger.info(f"Fichiers pertinents identifiés: {relevant_sources}")
     
-    # Extraire la ligne la plus pertinente
-    lines = best_chunk.get("content", "").split('\n')
-    relevant_lines = [
-        line.strip() for line in lines 
-        if len(line.strip()) > 10 and any(word in line.lower() for word in query_words)
-    ]
+    # Lire et analyser les fichiers pertinents
+    all_content = []
+    for source_file in relevant_sources:
+        file_path = data_dir / source_file
+        if file_path.exists():
+            try:
+                content = file_path.read_text(encoding="utf-8")
+                all_content.append({
+                    "source": source_file,
+                    "content": content,
+                    "lines": [l.strip() for l in content.split('\n') if l.strip() and len(l.strip()) > 20]
+                })
+                logger.debug(f"Chargé {source_file}: {len(content)} caractères")
+            except Exception as e:
+                logger.error(f"Erreur lecture {source_file}: {e}")
     
-    if relevant_lines:
-        line = relevant_lines[0]
-        # Nettoyer les préfixes comme [EVENEMENT]
+    if not all_content:
+        logger.error("Aucune donnée chargée")
+        return "Les données IMT ne sont pas disponibles. Veuillez réessayer plus tard."
+    
+    # === ANALYSE INTELLIGENTE DE LA QUESTION ===
+    
+    # Extraire les mots-clés importants (> 3 lettres, pas de mots vides)
+    stop_words = {"est", "sont", "dans", "pour", "avec", "des", "les", "une", "qui", "quoi", "quel", "quelle", "comment"}
+    query_words = [w for w in q_lower.split() if len(w) > 3 and w not in stop_words]
+    
+    logger.debug(f"Mots-clés extraits: {query_words}")
+    
+    # Chercher les lignes les plus pertinentes dans tous les fichiers
+    scored_lines = []
+    for doc in all_content:
+        for line in doc["lines"]:
+            line_lower = line.lower()
+            # Calculer un score de pertinence
+            score = sum(1 for word in query_words if word in line_lower)
+            
+            # Bonus si le fichier source est très pertinent
+            if doc["source"] in relevant_sources[:1]:  # Premier fichier le plus pertinent
+                score += 0.5
+            
+            if score > 0:
+                scored_lines.append({
+                    "line": line,
+                    "score": score,
+                    "source": doc["source"]
+                })
+    
+    # Trier par score décroissant
+    scored_lines.sort(key=lambda x: x["score"], reverse=True)
+    
+    if not scored_lines:
+        logger.info("Aucune ligne pertinente trouvée")
+        return "Je n'ai pas trouvé d'information pertinente sur cette question dans nos données. Pouvez-vous reformuler ou être plus précis ?"
+    
+    # Prendre les 3 meilleures lignes
+    best_lines = scored_lines[:3]
+    
+    logger.info(f"Trouvé {len(best_lines)} lignes pertinentes (score max: {best_lines[0]['score']})")
+    
+    # Construire la réponse à partir des lignes trouvées
+    response_parts = []
+    seen_content = set()  # Pour éviter les doublons
+    
+    for item in best_lines:
+        line = item["line"].strip()
+        
+        # Nettoyer les balises [EVENEMENT], [FORMATION], etc.
         if line.startswith('[') and ']' in line:
             line = line.split(']', 1)[1].strip()
-        logger.info(f"Réponse trouvée: {line[:50]}...")
-        return line
-    else:
-        # Retourner le début du chunk si aucune ligne spécifique trouvée
-        content = best_chunk.get("content", "")[:200]
-        logger.debug("Retour du début du chunk")
-        return content if content else "Aucune information pertinente trouvée."
+        
+        # Éviter les doublons et lignes trop courtes
+        if line not in seen_content and len(line) > 30:
+            response_parts.append(line)
+            seen_content.add(line)
+    
+    if not response_parts:
+        # Fallback: retourner le début du contenu le plus pertinent
+        best_doc = all_content[0]
+        first_line = best_doc["lines"][0] if best_doc["lines"] else "Aucune information trouvée."
+        # Nettoyer aussi le fallback
+        if first_line.startswith('[') and ']' in first_line:
+            first_line = first_line.split(']', 1)[1].strip()
+        return first_line
+    
+    # Joindre les parties de réponse
+    response = " ".join(response_parts[:2])  # Limiter à 2 lignes pour éviter trop de texte
+    
+    logger.info(f"Réponse construite: {response[:100]}...")
+    return response
 
 def _validate_email(email: str) -> bool:
     """Valide le format d'une adresse email.

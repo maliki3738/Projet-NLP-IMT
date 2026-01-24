@@ -6,12 +6,16 @@ BASE_URL = "https://www.imt.sn"
 PAGES = {
     "accueil": BASE_URL,
     "formations": f"{BASE_URL}/bachelor-sciences-et-ingenierie-du-numerique-iot-cyber-cloud/",
+    "formations_generale": f"{BASE_URL}/2-bachelors-en-sciences-et-ingenierie/",
+    "institut_mines_telecom": f"{BASE_URL}/institut-mines-telecom/",
+    "qui_sommes_nous": f"{BASE_URL}/qui-sommes-nous/institut-mines-telecom-dakar/",
     "Edulab": f"{BASE_URL}/espace-edulab/",
-    "contact": f"{BASE_URL}/contact/"
+    "contact": f"{BASE_URL}/contact/",
 }
 
 DATA_DIR = Path("data")
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(exist_ok=True
+)
 
 
 def scrape_page(name, url):

@@ -131,9 +131,32 @@ def reformulate_answer(question: str, context: str) -> str:
         return "Désolé, je n'ai pas trouvé d'information pertinente sur cette question."
     
     if not GENAI_AVAILABLE:
-        # Fallback simple si Gemini indisponible
-        logger.debug("Reformulation sans Gemini, retour contexte brut")
-        return context
+        # Fallback amélioré : formater la réponse de manière plus lisible
+        logger.debug("Reformulation sans Gemini, formatage du contexte")
+        
+        # Nettoyer le contexte
+        context = context.strip()
+        
+        # Enlever les balises [EVENEMENT], [FORMATION], etc.
+        import re
+        context = re.sub(r'\[.*?\]\s*', '', context)
+        
+        # Si c'est une adresse, la formater clairement
+        if "avenue" in context.lower() or "dakar" in context.lower():
+            if "KM" in context or "Avenue" in context:
+                return f"📍 L'IMT Dakar est situé à : {context}"
+        
+        # Formater la réponse de façon naturelle
+        if len(context) < 150:
+            return f"ℹ️ {context}"
+        else:
+            # Prendre les 2 premières phrases
+            sentences = context.split('.')
+            if len(sentences) >= 2:
+                response = '. '.join(sentences[:2]) + '.'
+            else:
+                response = context[:300]
+            return f"ℹ️ {response}"
 
     try:
         prompt = f"""Tu es un assistant clair et concis pour l'Institut des Métiers du Tertiaire (IMT) de Dakar.

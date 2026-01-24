@@ -13,9 +13,9 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
+from langchain_classic.agents import AgentExecutor, create_react_agent
+from langchain_classic.memory import ConversationBufferMemory
+from langchain_core.prompts import PromptTemplate
 
 from app.langchain_tools import tools
 
@@ -92,10 +92,9 @@ def create_imt_agent(
     
     # Initialiser le modèle Gemini via LangChain
     llm = ChatGoogleGenerativeAI(
-        model="gemini-pro",  # Compatible avec google-generativeai 0.3.2 (v1beta API)
-        google_api_key=api_key,
+        model="gemini-2.5-flash",  # Compatible avec google-genai (nouvelle API v1)
         temperature=temperature,
-        convert_system_message_to_human=True  # Nécessaire pour Gemini
+        google_api_key=api_key
     )
     
     # Créer le prompt
