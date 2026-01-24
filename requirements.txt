@@ -1,9 +1,13 @@
 python-dotenv==1.2.1
-google-generativeai==0.8.6
 redis==5.0.1
 chainlit==1.1.301
 requests
 beautifulsoup4
-chainlit
-redis
 pydantic<2
+pytest
+
+# LangChain pour orchestration d'agent (Jour 3)  
+langchain==0.1.0
+langchain-google-genai==0.0.6
+langchain-community==0.0.13
+google-generativeai<0.4.0

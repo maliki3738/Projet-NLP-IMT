@@ -1,27 +1,52 @@
 import chainlit as cl
-from app.agent import agent
-from memory.redis_memory import RedisMemory
 import os
 from dotenv import load_dotenv
 
+# Import des deux agents : ancien et nouveau (LangChain)
+from app.agent import agent as old_agent
+from app.langchain_agent import create_imt_agent, run_agent
+# from memory.redis_memory import RedisMemory  # Désactivé temporairement
+
 load_dotenv()
 
+# Configuration : choisir quel agent utiliser
+USE_LANGCHAIN = os.getenv("USE_LANGCHAIN_AGENT", "true").lower() == "true"
+
 # Initialize Redis memory with fallback to RAM if Redis unavailable
-# This allows the app to work even without Redis installed
-redis_host = os.getenv("REDIS_HOST", "localhost")
-redis_port = int(os.getenv("REDIS_PORT", 6379))
-memory = RedisMemory(host=redis_host, port=redis_port)
+# redis_host = os.getenv("REDIS_HOST", "localhost")
+# redis_port = int(os.getenv("REDIS_PORT", 6379))
+# memory = RedisMemory(host=redis_host, port=redis_port)
+memory = None  # Temporairement désactivé
+
+# Agent LangChain global (créé une seule fois)
+langchain_agent = None
 
 @cl.on_chat_start
 async def start():
     """
     Called when a new chat session starts.
-    Chainlit handles message persistence automatically, so we don't need to manually reload history.
-    The memory is used for long-term persistence across sessions if needed.
+    Initializes the LangChain agent if enabled.
     """
-    # Session initialization - Chainlit handles message history automatically
-    # The RedisMemory is used for cross-session persistence if Redis is available
-    pass
+    global langchain_agent
+    
+    # Créer l'agent LangChain si activé et pas encore créé
+    if USE_LANGCHAIN and langchain_agent is None:
+        try:
+            langchain_agent = create_imt_agent(verbose=False)
+            await cl.Message(
+                content="🤖 Agent IMT LangChain initialisé avec succès !\n\n"
+                        "Posez-moi vos questions sur l'IMT ou demandez-moi d'envoyer un email."
+            ).send()
+        except ValueError as e:
+            await cl.Message(
+                content=f"⚠️ Impossible d'initialiser l'agent LangChain : {e}\n"
+                        "Utilisation de l'agent classique à la place."
+            ).send()
+    elif not USE_LANGCHAIN:
+        await cl.Message(
+            content="🤖 Agent IMT classique activé.\n\n"
+                    "Posez-moi vos questions sur l'IMT !"
+        ).send()
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -36,27 +61,37 @@ async def main(message: cl.Message):
 
     # Special command to show full history
     if message.content.lower().strip() == "/historique" or message.content.lower().strip() == "/history":
-        history = memory.get_history(session_id)
-        if history:
-            history_text = "**📜 Historique complet de la conversation :**\n\n"
-            for i, msg in enumerate(history, 1):
-                if msg.startswith("user: "):
-                    history_text += f"**Vous {i//2 + 1}:** {msg[6:]}\n"
-                elif msg.startswith("assistant: "):
-                    history_text += f"**Agent {i//2 + 1}:** {msg[11:]}\n"
-            await cl.Message(content=history_text).send()
+        if memory:
+            history = memory.get_history(session_id)
+            if history:
+                history_text = "**📜 Historique complet de la conversation :**\n\n"
+                for i, msg in enumerate(history, 1):
+                    if msg.startswith("user: "):
+                        history_text += f"**Vous {i//2 + 1}:** {msg[6:]}\n"
+                    elif msg.startswith("assistant: "):
+                        history_text += f"**Agent {i//2 + 1}:** {msg[11:]}\n"
+                await cl.Message(content=history_text).send()
+            else:
+                await cl.Message(content="Aucun historique trouvé pour cette session.").send()
         else:
-            await cl.Message(content="Aucun historique trouvé pour cette session.").send()
+            await cl.Message(content="⚠️ La mémoire Redis est désactivée. Historique non disponible.").send()
         return
 
     # Store user message in memory
-    memory.add_message(session_id, "user", message.content)
+    if memory:
+        memory.add_message(session_id, "user", message.content)
 
-    # Call the IMT agent (handles search vs email decisions)
-    response = agent(message.content)
+    # Choisir quel agent utiliser
+    if USE_LANGCHAIN and langchain_agent is not None:
+        # Utiliser l'agent LangChain
+        response = run_agent(message.content, agent=langchain_agent)
+    else:
+        # Utiliser l'agent classique
+        response = old_agent(message.content)
 
     # Store assistant response in memory
-    memory.add_message(session_id, "assistant", response)
+    if memory:
+        memory.add_message(session_id, "assistant", response)
 
     # Send response to user
     await cl.Message(content=response).send()
