@@ -92,7 +92,7 @@ def create_imt_agent(
     
     # Initialiser le modèle Gemini via LangChain
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",  # Modèle mis à jour (gemini-pro deprecated)
+        model="gemini-pro",  # Compatible avec google-generativeai 0.3.2 (v1beta API)
         google_api_key=api_key,
         temperature=temperature,
         convert_system_message_to_human=True  # Nécessaire pour Gemini
