@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Import des deux agents : ancien et nouveau (LangChain)
 from app.agent import agent as old_agent
 from app.langchain_agent import create_imt_agent, run_agent
-# from memory.redis_memory import RedisMemory  # Désactivé temporairement
+from memory.redis_memory import RedisMemory
 
 load_dotenv()
 
@@ -13,10 +13,9 @@ load_dotenv()
 USE_LANGCHAIN = os.getenv("USE_LANGCHAIN_AGENT", "true").lower() == "true"
 
 # Initialize Redis memory with fallback to RAM if Redis unavailable
-# redis_host = os.getenv("REDIS_HOST", "localhost")
-# redis_port = int(os.getenv("REDIS_PORT", 6379))
-# memory = RedisMemory(host=redis_host, port=redis_port)
-memory = None  # Temporairement désactivé
+redis_host = os.getenv("REDIS_HOST", "localhost")
+redis_port = int(os.getenv("REDIS_PORT", 6379))
+memory = RedisMemory(host=redis_host, port=redis_port)
 
 # Agent LangChain global (créé une seule fois)
 langchain_agent = None
@@ -81,13 +80,16 @@ async def main(message: cl.Message):
     if memory:
         memory.add_message(session_id, "user", message.content)
 
+    # Get conversation history for context
+    history = memory.get_history(session_id) if memory else []
+
     # Choisir quel agent utiliser
     if USE_LANGCHAIN and langchain_agent is not None:
         # Utiliser l'agent LangChain
         response = run_agent(message.content, agent=langchain_agent)
     else:
-        # Utiliser l'agent classique
-        response = old_agent(message.content)
+        # Utiliser l'agent classique avec historique et mémoire
+        response = old_agent(message.content, history=history, memory_manager=memory, session_id=session_id)
 
     # Store assistant response in memory
     if memory:

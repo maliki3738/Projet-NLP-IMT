@@ -1,3 +1,4 @@
+#scripts/scrape_imt.py
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -17,100 +18,55 @@ DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True
 )
 
-
 def scrape_page(name, url):
-    print(f"Scraping {name}...")
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
+    """Scraping simple et efficace - extrait uniquement le contenu informatif."""
+    print(f"🚀 Scraping {name}...")
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    soup = BeautifulSoup(response.text, "html.parser")
+        # 1. Nettoyage : supprimer les éléments parasites
+        for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript"]):
+            tag.decompose()
 
-    # On enlève scripts & styles
-    for tag in soup(["script", "style", "noscript"]):
-        tag.decompose()
+        # 2. Extraction simple et efficace : TOUT le document (pas de ciblage restrictif)
+        # Car le ciblage de content_area était trop restrictif et ne trouvait qu'un titre
+        text_blocks = []
+        for tag in soup.find_all(['h1', 'h2', 'h3', 'p', 'li']):
+            text = tag.get_text().strip()
+            # Garder le texte significatif (> 15 chars pour éviter les fragments)
+            if len(text) > 15:
+                text_blocks.append(text)
 
-    text = soup.get_text(separator="\n")
-    cleaned_text = "\n".join(
-        line.strip() for line in text.splitlines() if line.strip()
-    )
+        # 3. Filtrage du bruit critique
+        BLACKLIST = [
+            "accepter les cookies", "refuser les cookies", "politique de confidentialité",
+            "google analytics", "google recaptcha", "combien font",
+            "pistage dans votre navigateur", "réglages des polices google", 
+            "intégrations de vidéo", "page mentions légales"
+        ]
+        
+        def is_noise(line: str) -> bool:
+            l = line.lower()
+            return any(word in l for word in BLACKLIST)
+        
+        cleaned_blocks = [block for block in text_blocks if not is_noise(block)]
 
-    # Nettoyage supplémentaire
-    BLACKLIST = [
-        "cookies",
-        "confidentialité",
-        "accepter",
-        "refuser",
-        "mentions légales",
-        "ouvrir la barre",
-        "uvrir",
-        "ropos",
-        "identialité",
-        "cookie",
-        "google analytics",
-        "accepter les cookies",
-        "champ",
-        "validation",
-        "test de vérification",
-        "combien font",
-        "pistage",
-        "navigateur",
-        "services externes",
-        "google webfonts",
-        "google maps",
-        "hébergeurs de vidéo",
-        "adresse ip",
-        "fonctionnalités",
-        "rechargement de la page",
-        "polices google fonts",
-        "google recaptcha",
-        "intégrations de vidéo",
-        "vimeo et youtube",
-        "incorporation de vidéos"
-    ]
+        # 4. Sauvegarde
+        if cleaned_blocks:
+            file_path = DATA_DIR / f"{name}.txt"
+            file_path.write_text("\n\n".join(cleaned_blocks), encoding="utf-8")
+            print(f"✅ {name}.txt sauvegardé ({len(cleaned_blocks)} blocs de texte)")
+        else:
+            print(f"⚠️ Aucun contenu trouvé pour {name}")
 
-    def is_noise(line: str) -> bool:
-        l = line.lower()
-        return any(word in l for word in BLACKLIST) or len(line) < 40
+    except Exception as e:
+        print(f"❌ Erreur sur {name}: {e}")
 
-    cleaned_lines = [
-        line for line in cleaned_text.splitlines()
-        if not is_noise(line)
-    ]
-
-    file_path = DATA_DIR / f"{name}.txt"
-    file_path.write_text("\n".join(cleaned_lines), encoding="utf-8")
 
 if __name__ == "__main__":
     for name, url in PAGES.items():
         scrape_page(name, url)
 
     print("Scraping terminé")
-
-
-# import requests
-# from bs4 import BeautifulSoup
-# import os
-
-# def scrape_imt():
-#     urls = ["https://www.imt.sn/", "https://www.imt.sn/bachelor-sciences-et-ingenierie-du-numerique-iot-cyber-cloud/","https://www.imt.sn/espace-edulab/","https://www.imt.sn/qui-sommes-nous/institut-mines-telecom-dakar/","https://www.imt.sn/contact/"]
-#     all_text = ""
-
-#     for url in urls:
-#         print(f"Scraping : {url}")
-#         res = requests.get(url)
-#         soup = BeautifulSoup(res.text, 'html.parser')
-        
-#         # Nettoyage : on ne prend que le texte informatif
-#         for tag in soup.find_all(['h1', 'h2', 'p', 'li']):
-#             text = tag.get_text().strip()
-#             if len(text) > 20: 
-#                 all_text += text + "\n"
-
-#     # Sauvegarde dans data/
-#     os.makedirs('data', exist_ok=True)
-#     with open("data/imt_content.txt", "w", encoding="utf-8") as f:
-#         f.write(all_text)
-#     print("✅ Texte extrait et nettoyé dans data/imt_content.txt")
-
-# if __name__ == "__main__":
-#     scrape_imt()

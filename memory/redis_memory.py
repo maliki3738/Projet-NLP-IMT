@@ -42,3 +42,36 @@ class RedisMemory:
         else:
             if session_id in self.memory:
                 self.memory[session_id] = []
+    
+    def set_entity(self, session_id: str, entity_type: str, value: str):
+        """Store a personal entity (name, email, etc.) for a session."""
+        if self.redis_available:
+            key = f"entities:{session_id}"
+            self.r.hset(key, entity_type, value)
+        else:
+            entities_key = f"entities:{session_id}"
+            if entities_key not in self.memory:
+                self.memory[entities_key] = {}
+            self.memory[entities_key][entity_type] = value
+    
+    def get_entity(self, session_id: str, entity_type: str) -> str:
+        """Retrieve a personal entity for a session."""
+        if self.redis_available:
+            key = f"entities:{session_id}"
+            value = self.r.hget(key, entity_type)
+            return value.decode('utf-8') if value else None
+        else:
+            entities_key = f"entities:{session_id}"
+            if entities_key in self.memory:
+                return self.memory[entities_key].get(entity_type)
+            return None
+    
+    def get_all_entities(self, session_id: str) -> dict:
+        """Retrieve all personal entities for a session."""
+        if self.redis_available:
+            key = f"entities:{session_id}"
+            entities = self.r.hgetall(key)
+            return {k.decode('utf-8'): v.decode('utf-8') for k, v in entities.items()}
+        else:
+            entities_key = f"entities:{session_id}"
+            return self.memory.get(entities_key, {})

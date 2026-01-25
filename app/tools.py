@@ -13,6 +13,79 @@ from pathlib import Path
 # Configuration du logging
 logger = logging.getLogger(__name__)
 
+def extract_best_paragraph(text: str, query_words: list[str], is_primary_source: bool = False) -> tuple[str, float]:
+    """Extrait le meilleur paragraphe d'un texte basé sur les mots-clés.
+    
+    Args:
+        text: Le texte complet
+        query_words: Liste de mots-clés de la question
+        is_primary_source: True si ce fichier est le premier match du routing
+        
+    Returns:
+        Tuple (paragraphe, score) ou ("", -999) si rien trouvé
+    """
+    # Essayer d'abord de découper par double saut de ligne
+    paragraphs = re.split(r"\n\s*\n", text)
+    
+    # Si un seul gros paragraphe, découper par ligne simple
+    if len(paragraphs) == 1:
+        paragraphs = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 40]
+    
+    logger.debug(f"🔍 Analyse: {len(paragraphs)} paragraphes, mots-clés: {query_words}, primaire: {is_primary_source}")
+    
+    scored = []
+
+    for idx, p in enumerate(paragraphs):
+        p_lower = p.lower()
+        score = sum(1 for w in query_words if w in p_lower)
+        
+        # Bonus FORT pour correspondance exacte mots-clés importants
+        if any(word in p_lower for word in ["téléphone", "email", "adresse", "km1", "avenue"]):
+            score += 2
+        
+        # Bonus FORT pour phrases descriptives officielles (plus robuste)
+        if "institut mines" in p_lower or "mines télécom" in p_lower or "mines-télécom" in p_lower:
+            score += 3
+        
+        # Bonus léger pour les premières lignes
+        if idx < 5:
+            score += 0.3
+        
+        # Bonus FORT pour fichier primaire (premier match du routing)
+        if is_primary_source:
+            score += 5
+        
+        # Malus léger UNIQUEMENT si vraiment trop court
+        if len(p) < 60:
+            score -= 0.5
+        
+        # Malus pour les témoignages
+        if "»" in p or "«" in p or "mon parcours" in p_lower:
+            score -= 3
+        
+        if score > -2:  # Permettre scores légèrement négatifs
+            scored.append((score, p.strip()))
+            if score > 0 and idx < 10:  # Log des 10 premiers avec score positif
+                logger.debug(f"  [{idx}] Score {score:.1f}: {p[:80]}...")
+
+    scored.sort(reverse=True, key=lambda x: x[0])
+    
+    if scored:
+        best_score, best_text = scored[0][0], scored[0][1]
+        
+        # Si le meilleur résultat est trop long (> 500 chars), prendre seulement les 2-3 premières phrases
+        if len(best_text) > 500:
+            # Prendre les 3 premières lignes du texte
+            lines = best_text.split('\n')
+            best_text = '\n'.join(lines[:3]) if len(lines) > 3 else best_text[:500]
+            logger.debug(f"✂️ Texte tronqué à {len(best_text)} chars")
+        
+        logger.debug(f"✅ Meilleur: score={best_score:.1f}, texte={best_text[:100]}...")
+        return (best_text, best_score)
+    else:
+        logger.debug(f"❌ Aucun paragraphe avec score > -2")
+        return ("", -999)
+
 def search_imt(query: str) -> str:
     """Recherche des informations dans la base de données IMT.
     
@@ -35,115 +108,75 @@ def search_imt(query: str) -> str:
     # Chargement des fichiers texte sources
     data_dir = Path("data")
     
-    # Mapping mots-clés -> fichiers sources
+    # Mapping mots-clés -> fichiers sources (amélioré)
     source_mapping = {
-        "formations.txt": ["formation", "bachelor", "programme", "diplôme", "étude", "cursus", "enseigne", "apprendre"],
-        "contact.txt": ["contact", "téléphone", "appeler", "joindre", "numéro", "adresse", "où", "ou", "localisation", "situé", "trouve"],
-        "Edulab.txt": ["edulab", "laboratoire", "espace", "expérimentation"],
-        "accueil.txt": ["événement", "actualité", "actu", "nouveau", "quoi de neuf", "news"]
+        "formations.txt": ["formation", "bachelor", "programme", "diplôme", "étude", "cursus", "enseigne", "apprendre", "master", "cours"],
+        "contact.txt": ["contact", "téléphone", "appeler", "joindre", "numéro", "adresse", "où", "ou", "localisation", "situé", "trouve", "mail"],
+        "Edulab.txt": ["edulab", "laboratoire", "espace", "expérimentation", "lab", "projet", "fablab"],
+        "accueil.txt": ["événement", "actualité", "actu", "nouveau", "quoi de neuf", "news"],
+        "qui_sommes_nous.txt": ["qui", "sommes", "présentation", "imt", "institut", "c'est quoi", "qu'est-ce", "à propos"]
     }
     
-    # Identifier le(s) fichier(s) pertinent(s)
-    relevant_sources = []
-    for source_file, keywords in source_mapping.items():
-        if any(keyword in q_lower for keyword in keywords):
-            relevant_sources.append(source_file)
+    # CORRECTION 1 : Forcer qui_sommes_nous si question identitaire
+    if any(x in q_lower for x in ["c'est quoi", "qu'est-ce", "présentation", "définition"]) and ("imt" in q_lower or "institut" in q_lower):
+        relevant_sources = ["qui_sommes_nous.txt"]
+        logger.info("🎯 Question identitaire → qui_sommes_nous.txt")
+    else:
+        # Identifier le(s) fichier(s) pertinent(s)
+        relevant_sources = []
+        for source_file, keywords in source_mapping.items():
+            if any(keyword in q_lower for keyword in keywords):
+                relevant_sources.append(source_file)
+        
+        # Si aucun fichier spécifique, chercher partout
+        if not relevant_sources:
+            relevant_sources = list(source_mapping.keys())
+        
+        logger.info(f"Fichiers pertinents identifiés: {relevant_sources}")
     
-    # Si aucun fichier spécifique, chercher partout
-    if not relevant_sources:
-        relevant_sources = list(source_mapping.keys())
+    # CORRECTION 2 : Extraire les mots-clés de la question
+    stop_words = {"est", "sont", "dans", "pour", "avec", "des", "les", "une", "qui", "quoi", "quel", "quelle", "comment", "c'est", "que", "qu"}
     
-    logger.info(f"Fichiers pertinents identifiés: {relevant_sources}")
+    # Nettoyer et normaliser les mots (enlever apostrophes, accents, etc.)
+    clean_query = q_lower.replace("l'", " ").replace("d'", " ").replace("'", " ")
+    query_words = [w for w in clean_query.split() if len(w) > 2 and w not in stop_words]
     
-    # Lire et analyser les fichiers pertinents
-    all_content = []
-    for source_file in relevant_sources:
+    # Si aucun mot-clé, utiliser mots génériques selon le contexte
+    if not query_words:
+        if "imt" in q_lower or "institut" in q_lower:
+            query_words = ["institut", "mines", "télécom"]
+        else:
+            query_words = [clean_query.strip()]
+    
+    logger.debug(f"Mots-clés extraits: {query_words}")
+    
+    # CORRECTION 3 : Comparer les scores de TOUS les fichiers
+    best_result = ("", -999)
+    best_source = ""
+    
+    for idx, source_file in enumerate(relevant_sources):
         file_path = data_dir / source_file
         if file_path.exists():
             try:
                 content = file_path.read_text(encoding="utf-8")
-                all_content.append({
-                    "source": source_file,
-                    "content": content,
-                    "lines": [l.strip() for l in content.split('\n') if l.strip() and len(l.strip()) > 20]
-                })
-                logger.debug(f"Chargé {source_file}: {len(content)} caractères")
+                is_primary = (idx == 0)  # Premier fichier = plus pertinent
+                paragraph, score = extract_best_paragraph(content, query_words, is_primary)
+                if score > best_result[1]:
+                    best_result = (paragraph, score)
+                    best_source = source_file
+                    logger.debug(f"Nouveau meilleur: {source_file} (score: {score})")
             except Exception as e:
                 logger.error(f"Erreur lecture {source_file}: {e}")
     
-    if not all_content:
-        logger.error("Aucune donnée chargée")
-        return "Les données IMT ne sont pas disponibles. Veuillez réessayer plus tard."
+    # Retourner le meilleur résultat trouvé
+    if best_result[0]:
+        logger.info(f"✅ Meilleure réponse trouvée dans {best_source} (score: {best_result[1]:.2f})")
+        return best_result[0]
     
-    # === ANALYSE INTELLIGENTE DE LA QUESTION ===
-    
-    # Extraire les mots-clés importants (> 3 lettres, pas de mots vides)
-    stop_words = {"est", "sont", "dans", "pour", "avec", "des", "les", "une", "qui", "quoi", "quel", "quelle", "comment"}
-    query_words = [w for w in q_lower.split() if len(w) > 3 and w not in stop_words]
-    
-    logger.debug(f"Mots-clés extraits: {query_words}")
-    
-    # Chercher les lignes les plus pertinentes dans tous les fichiers
-    scored_lines = []
-    for doc in all_content:
-        for line in doc["lines"]:
-            line_lower = line.lower()
-            # Calculer un score de pertinence
-            score = sum(1 for word in query_words if word in line_lower)
-            
-            # Bonus si le fichier source est très pertinent
-            if doc["source"] in relevant_sources[:1]:  # Premier fichier le plus pertinent
-                score += 0.5
-            
-            if score > 0:
-                scored_lines.append({
-                    "line": line,
-                    "score": score,
-                    "source": doc["source"]
-                })
-    
-    # Trier par score décroissant
-    scored_lines.sort(key=lambda x: x["score"], reverse=True)
-    
-    if not scored_lines:
-        logger.info("Aucune ligne pertinente trouvée")
-        return "Je n'ai pas trouvé d'information pertinente sur cette question dans nos données. Pouvez-vous reformuler ou être plus précis ?"
-    
-    # Prendre les 3 meilleures lignes
-    best_lines = scored_lines[:3]
-    
-    logger.info(f"Trouvé {len(best_lines)} lignes pertinentes (score max: {best_lines[0]['score']})")
-    
-    # Construire la réponse à partir des lignes trouvées
-    response_parts = []
-    seen_content = set()  # Pour éviter les doublons
-    
-    for item in best_lines:
-        line = item["line"].strip()
-        
-        # Nettoyer les balises [EVENEMENT], [FORMATION], etc.
-        if line.startswith('[') and ']' in line:
-            line = line.split(']', 1)[1].strip()
-        
-        # Éviter les doublons et lignes trop courtes
-        if line not in seen_content and len(line) > 30:
-            response_parts.append(line)
-            seen_content.add(line)
-    
-    if not response_parts:
-        # Fallback: retourner le début du contenu le plus pertinent
-        best_doc = all_content[0]
-        first_line = best_doc["lines"][0] if best_doc["lines"] else "Aucune information trouvée."
-        # Nettoyer aussi le fallback
-        if first_line.startswith('[') and ']' in first_line:
-            first_line = first_line.split(']', 1)[1].strip()
-        return first_line
-    
-    # Joindre les parties de réponse
-    response = " ".join(response_parts[:2])  # Limiter à 2 lignes pour éviter trop de texte
-    
-    logger.info(f"Réponse construite: {response[:100]}...")
-    return response
+    # Si rien trouvé
+    logger.warning("Aucune information pertinente trouvée")
+    return "Information non trouvée dans les données IMT."
+
 
 def _validate_email(email: str) -> bool:
     """Valide le format d'une adresse email.
