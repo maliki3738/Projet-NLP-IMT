@@ -1,29 +1,62 @@
 # 🤖 IMT AI Agent
 
-Agent conversationnel production-ready pour l'IMT Sénégal.
+Agent conversationnel intelligent pour l'Institut Mines-Télécom Dakar avec **RAG vectoriel**, **multi-LLM** et **observabilité complète**.
 
 ## 🎯 Fonctionnalités
 
-✅ **Répondre aux questions** sur l'IMT (formations, frais, localisation, contact)  
-✅ **Recherche intelligente** dans la base de connaissances IMT  
-✅ **Envoi d'emails réels** via SMTP (Gmail, Outlook, etc.)  
-✅ **Validation robuste** des entrées et adresses email  
-✅ **Gestion d'erreurs exhaustive** avec messages clairs  
-✅ **Logging structuré** pour debugging et monitoring  
-✅ **Tests automatisés** (56 tests, 100% passent)  
+✅ **RAG Vectoriel** : Recherche sémantique avec Sentence-Transformers (147 chunks indexés)  
+✅ **Multi-LLM** : Cascade Grok → OpenAI → Gemini avec fallback intelligent  
+✅ **Réponse aux questions** : Formations, contact, débouchés, histoire IMT  
+✅ **Envoi d'emails** : SMTP avec validation robuste (Gmail, Outlook)  
+✅ **Mémoire persistante** : Redis avec entités personnelles (nom, email, profil)  
+✅ **Observabilité** : Langfuse pour traçabilité des appels LLM  
+✅ **Interface moderne** : Chainlit avec agent LangChain ou classique  
+✅ **Tests complets** : pytest + tests RAG vectoriel  
 
 ## 📚 Stack Technique
 
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
-| **LLM** | Google Gemini | via langchain-google-genai 0.0.6 |
+| **LLM Primaire** | Grok (xAI) | grok-beta |
+| **LLM Fallback 1** | OpenAI | gpt-4o-mini (0.15$/1M tokens) |
+| **LLM Fallback 2** | Google Gemini | gemini-2.0-flash-exp |
+| **RAG** | Sentence-Transformers | paraphrase-multilingual-MiniLM-L12-v2 |
+| **Indexation** | Pickle | 147 chunks (embeddings 384D) |
 | **Orchestration** | LangChain | 0.1.0 (agent ReAct) |
 | **Interface** | Chainlit | 1.1.301 |
 | **Mémoire** | Redis | 5.0.1 (fallback RAM) |
+| **Observabilité** | Langfuse | cloud.langfuse.com |
 | **Tests** | pytest | 9.0.2 |
-| **Email** | SMTP | smtplib + MIME |
-| **Observabilité** | Logging | Python logging module |
-| **Python** | 3.11 | (Chainlit incompatible avec 3.13) |
+| **Python** | 3.11 | (Chainlit incompatible 3.13) |
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐
+│  Utilisateur    │
+└────────┬────────┘
+         │
+    ┌────▼─────────────────┐
+    │  Chainlit Interface  │
+    └────┬─────────────────┘
+         │
+    ┌────▼──────────────────────────────────┐
+    │         Agent (app/agent.py)          │
+    │  ┌─────────────────────────────────┐  │
+    │  │ 1. Grok (prioritaire)           │  │
+    │  │ 2. OpenAI GPT-4o-mini           │  │
+    │  │ 3. Gemini 2.0 Flash             │  │
+    │  │ 4. Fallback heuristique         │  │
+    │  └─────────────────────────────────┘  │
+    └────┬──────────────────────────────────┘
+         │
+    ┌────▼──────────────┬──────────────────┐
+    │                   │                  │
+┌───▼────────┐  ┌───────▼───────┐  ┌──────▼───────┐
+│ RAG Search │  │  Send Email   │  │    Redis     │
+│ (vector)   │  │  (SMTP)       │  │   Memory     │
+└────────────┘  └───────────────┘  └──────────────┘
+```
 
 ## 🚀 Installation Rapide
 
@@ -33,7 +66,7 @@ Agent conversationnel production-ready pour l'IMT Sénégal.
 # Cloner le projet
 cd /path/to/imt-agent-clean
 
-# Créer environnement virtuel
+# Créer environnement virtuel Python 3.11
 python3.11 -m venv venv
 source venv/bin/activate  # macOS/Linux
 # ou venv\Scripts\activate sur Windows
@@ -41,6 +74,10 @@ source venv/bin/activate  # macOS/Linux
 # Installer les dépendances
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# Construire l'index RAG vectoriel
+python scripts/build_index.py       # Crée chunks.json (147 paragraphes)
+python scripts/build_vector_index.py # Crée embeddings.pkl (384D)
 ```
 
 ### 2. Configuration des variables d'environnement
@@ -48,33 +85,52 @@ pip install -r requirements.txt
 Créer un fichier `.env` à la racine :
 
 ```env
-# API Gemini (obligatoire)
-GEMINI_API_KEY=votre_clé_gemini
+# === LLM Configuration ===
+# Grok (prioritaire)
+XAI_API_KEY=xai-xxxxxxxxxxxxx  # https://x.ai
 
-# Configuration Agent (optionnel)
-USE_LANGCHAIN_AGENT=true  # true pour LangChain, false pour agent classique
+# OpenAI (fallback 1) - 5$ minimum, 0.04-0.32$/semaine usage réel
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx  # https://platform.openai.com
 
-# Email SMTP (optionnel - mode simulation si absent)
+# Gemini (fallback 2)
+GEMINI_API_KEY=AIzaSyBxxxxxxxxxxxxx  # https://ai.google.dev
+
+# === Langfuse (observabilité) ===
+LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxx
+LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxx
+LANGFUSE_HOST=https://cloud.langfuse.com
+
+# === Agent Configuration ===
+USE_LANGCHAIN_AGENT=true  # true = LangChain, false = agent classique
+
+# === Email SMTP (optionnel) ===
 EMAIL_USER=votre_email@gmail.com
-EMAIL_PASS=mot_de_passe_application
+EMAIL_PASS=mot_de_passe_application  # Voir docs/GUIDE_SMTP.md
 EMAIL_TO=destinataire@example.com
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 
-# Redis (optionnel - fallback RAM si absent)
+# === Redis (optionnel - fallback RAM) ===
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-📖 **Guide détaillé** : Voir [docs/GUIDE_SMTP.md](docs/GUIDE_SMTP.md) pour configurer l'email
+📖 **Guides détaillés** :
+- [docs/GUIDE_OPENAI.md](docs/GUIDE_OPENAI.md) : Configuration OpenAI + coûts
+- [docs/GUIDE_LANGFUSE.md](docs/GUIDE_LANGFUSE.md) : Configuration observabilité
+- [docs/GUIDE_SMTP.md](docs/GUIDE_SMTP.md) : Configuration email
 
 ### 3. Vérifier l'installation
 
 ```bash
-# Lancer les tests
-pytest
+# Tester RAG vectoriel
+python test_vector_search.py
 
-# Résultat attendu : 40 tests passent en ~1 seconde
+# Tester agent complet
+python test_agent_rag.py
+
+# Lancer interface Chainlit
+chainlit run chainlit_app.py
 ```
 
 ## 💬 Utilisation
@@ -141,37 +197,53 @@ pytest tests/test_tools.py -v
 | [GUIDE_SMTP.md](docs/GUIDE_SMTP.md) | Configuration email Gmail/Outlook (350+ lignes) |
 | [PLAN_DEVELOPPEMENT.md](docs/PLAN_DEVELOPPEMENT.md) | Roadmap 7 jours du projet |
 | [RAPPORT_JOUR0.md](docs/RAPPORT_JOUR0.md) | Préparation et diagnostic initial |
-| [RAPPORT_JOUR1.md](docs/RAPPORT_JOUR1.md) | Stabilisation avec 22 tests |
-| [RAPPORT_JOUR2.md](docs/RAPPORT_JOUR2.md) | Email SMTP production-ready |
-| [RAPPORT_JOUR3.md](docs/RAPPORT_JOUR3.md) | Migration LangChain avec agent ReAct |
-| [CHECKLIST.md](docs/CHECKLIST.md) | Suivi des tâches (57.1% complété) |
-
 ## 🛠️ Architecture
 
 ```
 imt-agent-clean/
 ├── app/
-│   ├── agent.py           # Agent classique (héuristiques)
-│   ├── langchain_agent.py # Agent LangChain ReAct (nouveau)
-│   ├── langchain_tools.py # LangChain Tools wrappers
-│   ├── tools.py           # Outils (search_imt, send_email)
+│   ├── agent.py            # Agent multi-LLM (Grok→OpenAI→Gemini)
+│   ├── langchain_agent.py  # Agent LangChain ReAct
+│   ├── langchain_tools.py  # LangChain Tools wrappers
+│   ├── tools.py            # search_imt (RAG vectoriel) + send_email
+│   ├── vector_search.py    # 🆕 Moteur RAG (Sentence-Transformers)
 │   └── __init__.py
 ├── tests/
-│   ├── test_agent.py      # 20 tests agent classique
-│   ├── test_langchain_agent.py  # 18 tests LangChain
-│   └── test_tools.py      # 18 tests outils
+│   ├── test_agent.py       # Tests agent classique
+│   ├── test_langchain_agent.py  # Tests LangChain
+│   └── test_tools.py       # Tests outils
 ├── memory/
-│   └── redis_memory.py    # Gestion mémoire Redis/RAM
+│   └── redis_memory.py     # Mémoire Redis (fallback RAM)
 ├── data/
-│   └── chunks.json        # Base de connaissances IMT
+│   ├── chunks.json         # 147 paragraphes indexés
+│   ├── embeddings.pkl      # 🆕 Embeddings vectoriels (384D)
+│   ├── formations.txt      # Contenu formations (94 lignes)
+│   ├── contact.txt         # Coordonnées IMT (44 lignes)
+│   └── ...                 # 7 fichiers .txt (474 lignes total)
 ├── scripts/
-│   ├── scrape_imt.py      # Scraper du site IMT
-│   └── build_index.py     # Construction de l'index
-├── docs/                  # Documentation complète
-├── chainlit_app.py        # Interface Chainlit
-├── requirements.txt       # Dépendances Python
-└── .env.example           # Template configuration
+│   ├── scrape_imt.py       # Scraper site IMT
+│   ├── build_index.py      # Découpage paragraphes
+│   └── build_vector_index.py # 🆕 Génération embeddings
+├── docs/
+│   ├── GUIDE_OPENAI.md     # 🆕 Configuration OpenAI
+│   ├── GUIDE_LANGFUSE.md   # 🆕 Configuration Langfuse
+│   ├── GUIDE_SMTP.md       # Configuration email
+│   └── CHECKLIST.md        # Suivi tâches
+├── chainlit_app.py         # Interface web Chainlit
+├── test_vector_search.py   # 🆕 Tests RAG vectoriel
+├── test_agent_rag.py       # 🆕 Tests agent complet
+├── requirements.txt        # Dépendances
+└── .env                    # Configuration (API keys)
 ```
+
+## 👥 Équipe & Responsabilités
+
+| Membre | Responsabilités | Statut |
+|--------|----------------|--------|
+| **Maliki** | Orchestration agent, tools, README, Git, présentation | ✅ Agent + Tools OK, ⏳ README/Git |
+| **Makhtar** | Scraping IMT, indexation RAG vectoriel | ✅ Scraping + RAG vectoriel OK |
+| **Diabang** | Mémoire Redis, interface Chainlit | ✅ Redis + Chainlit OK, ⏳ UI custom |
+| **Debora** | Observabilité Langfuse (traçabilité LLM) | ✅ Code intégré, ⏳ Compte + test |
 
 ## 🔧 Développement
 

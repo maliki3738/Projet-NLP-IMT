@@ -6,6 +6,23 @@ from dotenv import load_dotenv
 from app.tools import search_imt, send_email
 from typing import Optional
 
+# Tentative d'import Langfuse (observabilité)
+try:
+    from langfuse import Langfuse
+    LANGFUSE_AVAILABLE = True
+    langfuse_client = Langfuse(
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    )
+    logger = logging.getLogger(__name__)
+    logger.info("✅ Langfuse configuré avec succès")
+except Exception as e:
+    LANGFUSE_AVAILABLE = False
+    langfuse_client = None
+    logger = logging.getLogger(__name__)
+    logger.warning(f"⚠️ Langfuse non disponible : {e}")
+
 load_dotenv()
 
 # Configuration du logging
@@ -70,7 +87,7 @@ except Exception as e:
     logger.info(f"💡 OpenAI non disponible : {e}")
 
 def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
-    """Appelle Grok via l'API xAI.
+    """Appelle Grok via l'API xAI avec traçabilité Langfuse.
     
     Args:
         prompt: Le prompt à envoyer
@@ -82,6 +99,11 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
     if not GROK_AVAILABLE or not grok_client:
         return None
     
+    trace = None
+    if LANGFUSE_AVAILABLE:
+        trace = langfuse_client.trace(name="grok_call")
+        trace.span(name="llm", input={"prompt": prompt}, metadata={"model": "grok-beta"})
+    
     try:
         response = grok_client.chat.completions.create(
             model="grok-beta",
@@ -89,13 +111,20 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
             max_tokens=max_tokens,
             temperature=0.3,
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        
+        if trace:
+            trace.span(name="llm", output={"response": result}, metadata={"tokens": max_tokens})
+        
+        return result
     except Exception as e:
         logger.error(f"Erreur Grok : {e}")
+        if trace:
+            trace.span(name="llm", metadata={"error": str(e)})
         return None
 
 def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
-    """Appelle OpenAI GPT-4o-mini (économique et performant).
+    """Appelle OpenAI GPT-4o-mini (économique et performant) avec traçabilité Langfuse.
     
     Args:
         prompt: Le prompt à envoyer
@@ -107,6 +136,11 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
     if not OPENAI_AVAILABLE or not openai_client:
         return None
     
+    trace = None
+    if LANGFUSE_AVAILABLE:
+        trace = langfuse_client.trace(name="openai_call")
+        trace.span(name="llm", input={"prompt": prompt}, metadata={"model": "gpt-4o-mini"})
+    
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",  # Le moins cher : 0.15$/1M tokens entrée, 0.6$/1M sortie
@@ -114,9 +148,16 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
             max_tokens=max_tokens,
             temperature=0.3,
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        
+        if trace:
+            trace.span(name="llm", output={"response": result}, metadata={"tokens": max_tokens})
+        
+        return result
     except Exception as e:
         logger.error(f"Erreur OpenAI : {e}")
+        if trace:
+            trace.span(name="llm", metadata={"error": str(e)})
         return None
 
 def _call_gemini(prompt: str) -> Optional[str]:

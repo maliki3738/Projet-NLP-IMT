@@ -10,6 +10,15 @@ from typing import Optional
 from difflib import get_close_matches
 from pathlib import Path
 
+# Import du nouveau moteur de recherche vectorielle
+try:
+    from app.vector_search import vector_search_imt as _vector_search
+    VECTOR_SEARCH_AVAILABLE = True
+except ImportError:
+    VECTOR_SEARCH_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("⚠️ Recherche vectorielle non disponible, utilisation du fallback manuel")
+
 # Configuration du logging
 logger = logging.getLogger(__name__)
 
@@ -89,8 +98,8 @@ def extract_best_paragraph(text: str, query_words: list[str], is_primary_source:
 def search_imt(query: str) -> str:
     """Recherche des informations dans la base de données IMT.
     
-    Cette fonction analyse la question, identifie le fichier source pertinent,
-    et extrait les informations réelles des données scrapées.
+    Cette fonction utilise la recherche vectorielle sémantique (RAG) si disponible,
+    sinon fallback vers le scoring manuel basique.
     
     Args:
         query: La question de recherche
@@ -103,6 +112,28 @@ def search_imt(query: str) -> str:
         return "Veuillez poser une question valide."
     
     logger.debug(f"Recherche IMT pour: {query}")
+    
+    # OPTION 1 : Recherche vectorielle (RAG) - Prioritaire
+    if VECTOR_SEARCH_AVAILABLE:
+        try:
+            results = _vector_search(query, top_k=1)
+            if results and results[0]['score'] > 0.3:  # Seuil de confiance
+                best = results[0]
+                logger.info(f"✅ Réponse RAG trouvée: {best['source']} (score: {best['score']:.3f})")
+                return best['content']
+        except Exception as e:
+            logger.error(f"❌ Erreur recherche vectorielle: {e}, fallback vers scoring manuel")
+    
+    # OPTION 2 : Fallback scoring manuel (ancien système)
+    logger.info("📊 Utilisation du scoring manuel (fallback)")
+    return _search_imt_manual(query)
+
+
+def _search_imt_manual(query: str) -> str:
+    """Ancien système de recherche par scoring manuel (fallback).
+    
+    Conservé pour compatibilité si la recherche vectorielle échoue.
+    """
     q_lower = query.lower()
     
     # Chargement des fichiers texte sources
