@@ -1,50 +1,63 @@
 # app/vector_search.py
 """
-Moteur de recherche vectorielle utilisant Sentence-Transformers.
-Remplace le scoring manuel basique par une recherche sémantique.
+Moteur de recherche vectorielle utilisant FAISS + Sentence-Transformers.
+Remplace le scoring manuel basique par une recherche sémantique optimisée.
 """
 from pathlib import Path
 import pickle
 import numpy as np
+import faiss
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict
 
 DATA_DIR = Path("data")
 EMBEDDINGS_FILE = DATA_DIR / "embeddings.pkl"
+FAISS_INDEX_FILE = DATA_DIR / "faiss.index"
 
 class VectorSearch:
-    """Recherche sémantique vectorielle dans les documents IMT."""
+    """Recherche sémantique vectorielle FAISS dans les documents IMT."""
     
     def __init__(self):
-        """Charge l'index vectoriel et le modèle."""
+        """Charge l'index FAISS et le modèle."""
         self.model = None
         self.chunks = []
-        self.embeddings = None
+        self.index = None
         self._load_index()
     
     def _load_index(self):
-        """Charge l'index vectoriel depuis le fichier."""
-        if not EMBEDDINGS_FILE.exists():
+        """Charge l'index FAISS et les métadonnées."""
+        # Vérifier les fichiers
+        if not FAISS_INDEX_FILE.exists():
             raise FileNotFoundError(
-                f"❌ Index vectoriel introuvable : {EMBEDDINGS_FILE}\n"
+                f"❌ Index FAISS introuvable : {FAISS_INDEX_FILE}\n"
                 "Exécutez d'abord : python scripts/build_vector_index.py"
             )
         
+        if not EMBEDDINGS_FILE.exists():
+            raise FileNotFoundError(
+                f"❌ Métadonnées introuvables : {EMBEDDINGS_FILE}\n"
+                "Exécutez d'abord : python scripts/build_vector_index.py"
+            )
+        
+        # Charger l'index FAISS
+        self.index = faiss.read_index(str(FAISS_INDEX_FILE))
+        
+        # Charger les métadonnées
         with open(EMBEDDINGS_FILE, 'rb') as f:
-            data = pickle.load(f)
+            metadata = pickle.load(f)
         
-        self.chunks = data['chunks']
-        self.embeddings = data['embeddings']
-        model_name = data['model_name']
+        self.chunks = metadata['chunks']
+        model_name = metadata['model_name']
         
-        # Charger le modèle (même que pour l'indexation)
+        # Charger le modèle
         self.model = SentenceTransformer(model_name)
+        self.model.encode("test", show_progress_bar=False)  # Warmup
         
-        print(f"✅ Index vectoriel chargé : {len(self.chunks)} chunks")
+        print(f"✅ Index FAISS chargé : {len(self.chunks)} chunks (IndexFlatIP)")
     
     def search(self, query: str, top_k: int = 3) -> List[Dict]:
         """
-        Recherche sémantique dans l'index.
+        Recherche sémantique FAISS dans l'index.
         
         Args:
             query: Question de l'utilisateur
@@ -54,23 +67,23 @@ class VectorSearch:
             Liste de chunks pertinents avec scores de similarité
         """
         # Générer embedding de la requête
-        query_embedding = self.model.encode([query])[0]
+        query_embedding = self.model.encode([query], show_progress_bar=False, convert_to_numpy=True)
         
-        # Calculer similarité cosinus avec tous les chunks
-        similarities = np.dot(self.embeddings, query_embedding) / (
-            np.linalg.norm(self.embeddings, axis=1) * np.linalg.norm(query_embedding)
-        )
+        # Normaliser pour similarité cosinus (comme lors de l'indexation)
+        faiss.normalize_L2(query_embedding)
         
-        # Trouver les top_k plus similaires
-        top_indices = np.argsort(similarities)[::-1][:top_k]
+        # Recherche FAISS (retourne distances et indices)
+        distances, indices = self.index.search(query_embedding.astype('float32'), top_k)
         
+        # Construire les résultats
         results = []
-        for idx in top_indices:
-            results.append({
-                'content': self.chunks[idx]['content'],
-                'source': self.chunks[idx]['source'],
-                'score': float(similarities[idx])
-            })
+        for idx, score in zip(indices[0], distances[0]):
+            if idx < len(self.chunks):  # Vérification sécurité
+                results.append({
+                    'content': self.chunks[idx]['content'],
+                    'source': self.chunks[idx]['source'],
+                    'score': float(score)  # Score = similarité cosinus (0-1)
+                })
         
         return results
     

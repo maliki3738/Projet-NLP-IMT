@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 
 # Import des deux agents : ancien et nouveau (LangChain)
 from app.agent import agent as old_agent
-from app.langchain_agent import create_imt_agent, run_agent
+# TEMPORAIRE: LangChain agent désactivé (API breaking changes v1.x)
+# from app.langchain_agent import create_imt_agent, run_agent
 from memory.redis_memory import RedisMemory
 
 load_dotenv()
 
-# Configuration : choisir quel agent utiliser
-USE_LANGCHAIN = os.getenv("USE_LANGCHAIN_AGENT", "true").lower() == "true"
+# Configuration : choisir quel agent utiliser  
+# FORCE OLD AGENT (LangChain needs update)
+USE_LANGCHAIN = False  # os.getenv("USE_LANGCHAIN_AGENT", "true").lower() == "true"
 
 # Initialize Redis memory with fallback to RAM if Redis unavailable
 redis_host = os.getenv("REDIS_HOST", "localhost")
@@ -31,7 +33,7 @@ async def start():
     # Créer l'agent LangChain si activé et pas encore créé
     if USE_LANGCHAIN and langchain_agent is None:
         try:
-            langchain_agent = create_imt_agent(verbose=False)
+            # langchain_agent = create_imt_agent(verbose=False)  # DISABLED
             await cl.Message(
                 content="🤖 Agent IMT LangChain initialisé avec succès !\n\n"
                         "Posez-moi vos questions sur l'IMT ou demandez-moi d'envoyer un email."
@@ -85,8 +87,9 @@ async def main(message: cl.Message):
 
     # Choisir quel agent utiliser
     if USE_LANGCHAIN and langchain_agent is not None:
-        # Utiliser l'agent LangChain
-        response = run_agent(message.content, agent=langchain_agent)
+        # Utiliser l'agent LangChain (DISABLED)
+        # response = run_agent(message.content, agent=langchain_agent)
+        response = "❌ LangChain agent temporairement désactivé (API v1.x breaking changes)"
     else:
         # Utiliser l'agent classique avec historique et mémoire
         response = old_agent(message.content, history=history, memory_manager=memory, session_id=session_id)

@@ -13,8 +13,9 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_classic.agents import AgentExecutor, create_react_agent
-from langchain_classic.memory import ConversationBufferMemory
+from langchain.agents import create_react_agent
+from langchain.agents.agent import AgentExecutor
+from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import PromptTemplate
 
 from app.langchain_tools import tools
