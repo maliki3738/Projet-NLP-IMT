@@ -1,110 +1,188 @@
-# docs/GUIDE_LANGFUSE.md
+# Guide d'activation Langfuse pour IMT Agent
 
-# 🔍 Guide d'intégration Langfuse
+## 🎯 Vue d'ensemble
 
-## 📋 Vue d'ensemble
+Langfuse est une plateforme d'observabilité pour applications LLM qui permet de :
+- Tracer tous les appels aux modèles (Gemini, Grok, OpenAI)
+- Monitorer les coûts et latences
+- Analyser les performances des prompts
+- Déboguer les conversations
 
-**Langfuse** est une plateforme d'observabilité pour applications LLM (Large Language Models). Elle permet de :
-- Tracer tous les appels aux modèles (Grok, OpenAI, Gemini)
-- Monitorer les performances (latence, coûts, tokens)
-- Débugger les problèmes en production
-- Analyser les conversations utilisateurs
+## ⏱️ Temps estimé : 6-7 minutes
 
----
+## 📋 Prérequis
 
-## 🎯 Étape 1 : Créer un compte Langfuse
+- ✅ Code déjà intégré dans `app/agent.py`
+- ✅ Package `langfuse` installé
+- ❌ Compte Langfuse à créer
+- ❌ Clés API à récupérer
 
-1. Aller sur **[https://cloud.langfuse.com](https://cloud.langfuse.com)**
-2. S'inscrire gratuitement (plan gratuit : 50k événements/mois)
-3. Créer un nouveau projet : `imt-agent`
+## 🚀 Étapes d'activation
 
----
+### Étape 1 : Créer un compte Langfuse (2 minutes)
 
-## 🔑 Étape 2 : Récupérer les clés API
+1. Aller sur : https://cloud.langfuse.com
+2. Cliquer sur **Sign Up**
+3. S'inscrire avec email (ou GitHub/Google)
+4. Confirmer l'email
+5. Créer un projet : `imt-agent` (ou autre nom)
 
-Dans votre dashboard Langfuse :
+**Plan gratuit** : 50 000 événements/mois (largement suffisant)
 
-1. Cliquer sur **"Settings"** → **"API Keys"**
-2. Créer une nouvelle clé et copier :
-   - **Public Key** : `pk-lf-...`
-   - **Secret Key** : `sk-lf-...`
-   - **Host** : `https://cloud.langfuse.com`
+### Étape 2 : Récupérer les clés API (1 minute)
 
----
+1. Dans le dashboard Langfuse
+2. Aller dans **Settings** (⚙️) → **API Keys**
+3. Cliquer sur **Create new API key**
+4. Copier les deux clés :
+   - `LANGFUSE_PUBLIC_KEY` (commence par `pk-lf-...`)
+   - `LANGFUSE_SECRET_KEY` (commence par `sk-lf-...`)
 
-## ⚙️ Étape 3 : Configurer le fichier .env
+⚠️ **Important** : La clé secrète ne sera affichée qu'une seule fois !
 
-Ajouter ces variables dans `.env` :
+### Étape 3 : Ajouter les clés dans .env (1 minute)
+
+Ouvrir le fichier `.env` et ajouter :
 
 ```bash
-# Langfuse Configuration
-LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxx
-LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxx
+# Langfuse Observability
+LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxxxxxxxxxxxxx
+LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxxxxxxxxxxxxx
 LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
----
+Sauvegarder le fichier.
 
-## 🔧 Étape 4 : Intégrer dans agent.py
+### Étape 4 : Tester l'activation (2 minutes)
 
-Le code est déjà préparé dans `app/agent.py`. Décommenter les sections Langfuse :
+1. **Redémarrer Chainlit** (pour charger les nouvelles variables) :
+   ```bash
+   pkill -f chainlit
+   ./start_chainlit.sh
+   ```
 
-1. **Import** (ligne ~7-10)
-2. **Initialisation** (ligne ~40-45)
-3. **Traces dans _call_grok()** (ligne ~75-80)
-4. **Traces dans _call_openai()** (ligne ~100-105)
-5. **Traces dans _call_gemini()** (ligne ~125-130)
+2. **Ou tester directement** :
+   ```bash
+   python test_agent_rag.py
+   ```
 
----
+3. **Vérifier les logs** - Vous devez voir :
+   ```
+   ✅ Langfuse configuré avec succès
+   ```
 
-## ✅ Étape 5 : Tester l'intégration
+   Au lieu de :
+   ```
+   ⚠️ Langfuse non disponible
+   ```
 
+### Étape 5 : Vérifier le dashboard (1 minute)
+
+1. Retourner sur https://cloud.langfuse.com
+2. Cliquer sur votre projet `imt-agent`
+3. Aller dans l'onglet **Traces**
+4. Vous devriez voir les traces des appels LLM :
+   - Modèle utilisé (Gemini/Grok/OpenAI)
+   - Prompt envoyé
+   - Réponse reçue
+   - Latence (temps de réponse)
+   - Tokens utilisés
+
+**Prendre un screenshot** pour le README !
+
+## 📊 Utilisation du dashboard
+
+### Traces
+- Voir tous les appels LLM en temps réel
+- Cliquer sur une trace pour voir les détails complets
+- Filtrer par modèle, utilisateur, session
+
+### Analytics
+- Coûts par modèle
+- Latences moyennes
+- Tokens utilisés par jour
+- Taux d'erreur
+
+### Prompts
+- Gérer les versions de prompts
+- Comparer les performances
+- A/B testing
+
+## ✅ Validation finale
+
+Checklist de vérification :
+
+- [ ] Compte Langfuse créé
+- [ ] Clés API dans `.env`
+- [ ] Agent redémarré
+- [ ] Logs affichent "✅ Langfuse configuré"
+- [ ] Dashboard affiche les traces
+- [ ] Screenshot pris pour documentation
+
+## 🐛 Dépannage
+
+### Erreur : "Authentication error"
+- Vérifier que les clés sont bien copiées (pas d'espaces)
+- Vérifier que `LANGFUSE_PUBLIC_KEY` commence par `pk-lf-`
+- Vérifier que `LANGFUSE_SECRET_KEY` commence par `sk-lf-`
+
+### Erreur : "No traces in dashboard"
+- Attendre 10-30 secondes (délai d'envoi)
+- Vérifier que l'agent a bien été appelé (faire une question)
+- Vérifier la connexion internet
+
+### Erreur : "Module not found: langfuse"
 ```bash
-python test_agent_simple.py
+source venv/bin/activate
+pip install langfuse
 ```
 
-Vérifier sur **[cloud.langfuse.com](https://cloud.langfuse.com)** :
-- Onglet **"Traces"** → Voir les appels LLM
-- Onglet **"Sessions"** → Analyser les conversations
-- Onglet **"Metrics"** → Coûts et performances
+## 📝 Code intégré (référence)
+
+Le code suivant est déjà dans `app/agent.py` :
+
+```python
+# Langfuse initialization
+try:
+    from langfuse import Langfuse
+    langfuse_client = Langfuse(
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    )
+    LANGFUSE_AVAILABLE = True
+    logger.info("✅ Langfuse configuré avec succès")
+except Exception as e:
+    langfuse_client = None
+    LANGFUSE_AVAILABLE = False
+    logger.warning(f"⚠️ Langfuse non disponible : {e}")
+```
+
+Chaque appel LLM envoie une trace :
+
+```python
+if LANGFUSE_AVAILABLE:
+    trace = langfuse_client.trace(
+        name="gemini_call",
+        user_id=session_id,
+        metadata={"model": "gemini-pro", "query": query}
+    )
+```
+
+## 🔗 Ressources
+
+- Documentation Langfuse : https://langfuse.com/docs
+- Pricing : https://langfuse.com/pricing (gratuit jusqu'à 50k events)
+- Support : support@langfuse.com
+
+## 🎉 Félicitations !
+
+Langfuse est maintenant actif ! Vous pouvez :
+- Monitorer toutes les conversations en temps réel
+- Analyser les performances des modèles
+- Optimiser les coûts
+- Déboguer les problèmes efficacement
 
 ---
 
-## 📊 Dashboard Langfuse
-
-Exemple de ce que vous verrez :
-
-```
-┌─────────────────────────────────────────────────┐
-│ Traces                                          │
-├─────────────────────────────────────────────────┤
-│ 2026-01-25 19:00:00                            │
-│ Question: "Quelles formations proposez-vous ?"  │
-│ Model: grok-beta (fallback)                     │
-│ Latency: 1.2s                                   │
-│ Tokens: 150 input / 80 output                  │
-│ Cost: $0.0005                                   │
-└─────────────────────────────────────────────────┘
-```
-
----
-
-## 🎓 Bénéfices
-
-✅ **Transparence totale** : Voir tous les appels LLM  
-✅ **Débogage facile** : Identifier les erreurs  
-✅ **Optimisation coûts** : Tracker dépenses par modèle  
-✅ **Amélioration continue** : Analyser qualité réponses  
-
----
-
-## 🚀 Prochaines étapes
-
-1. Créer compte Langfuse
-2. Ajouter clés dans `.env`
-3. Décommenter code dans `agent.py`
-4. Tester et valider dashboard
-5. Documenter dans README.md
-
-**Responsable** : Debora  
-**Temps estimé** : 2-3 heures
+**Prochaine étape** : Customiser l'UI Chainlit (logo, couleurs) → Voir `GUIDE_CHAINLIT.md`

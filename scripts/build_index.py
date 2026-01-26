@@ -1,4 +1,8 @@
 # scripts/build_index.py
+"""
+Script pour créer l'index JSON des chunks à partir des fichiers .txt
+Ce script est obsolète - utilisez build_vector_index.py à la place pour FAISS
+"""
 from pathlib import Path
 import json
 import re
@@ -41,13 +45,12 @@ def build_index():
                 "content": paragraph
             })
 
-    INDEX_FILE.write_text(
-        json.dumps(chunks, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
-
+    # Sauvegarder dans chunks.json
+    INDEX_FILE.write_text(json.dumps(chunks, ensure_ascii=False, indent=2), encoding="utf-8")
+    
     print(f"✅ Index créé avec succès ({len(chunks)} chunks)")
     print(f"📄 Fichiers traités : {len(list(DATA_DIR.glob('*.txt')))}")
+    print(f"💾 Sauvegardé dans : {INDEX_FILE}")
 
 if __name__ == "__main__":
     build_index()

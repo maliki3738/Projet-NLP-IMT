@@ -6,6 +6,7 @@ Ce module implémente un agent ReAct qui peut :
 - Envoyer des emails de contact
 
 Utilise LangChain pour l'orchestration et le nouveau SDK Gemini.
+Intégration Langfuse pour l'observabilité (Jour 4).
 """
 import os
 import logging
@@ -20,6 +21,14 @@ from langchain_core.prompts import PromptTemplate
 
 from app.langchain_tools import tools
 
+# Langfuse pour l'observabilité
+try:
+    from langfuse.decorators import observe
+    from langfuse import Langfuse
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+    LANGFUSE_AVAILABLE = False
+
 # Configuration du logging
 logging.basicConfig(
     level=logging.INFO,
@@ -29,6 +38,29 @@ logger = logging.getLogger(__name__)
 
 # Charger les variables d'environnement
 load_dotenv()
+
+# ========== Configuration Langfuse ==========
+if LANGFUSE_AVAILABLE:
+    try:
+        langfuse_public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
+        langfuse_secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+        langfuse_host = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        
+        if langfuse_public_key and langfuse_secret_key:
+            langfuse_client = Langfuse(
+                public_key=langfuse_public_key,
+                secret_key=langfuse_secret_key,
+                host=langfuse_host
+            )
+            logger.info("✅ Langfuse configuré avec succès")
+        else:
+            LANGFUSE_AVAILABLE = False
+            logger.warning("⚠️  Clés Langfuse manquantes (LANGFUSE_PUBLIC_KEY ou LANGFUSE_SECRET_KEY)")
+    except Exception as e:
+        LANGFUSE_AVAILABLE = False
+        logger.warning(f"⚠️  Erreur configuration Langfuse : {e}")
+else:
+    logger.info("ℹ️  Langfuse non installé (optionnel)")
 
 
 # Template de prompt pour l'agent ReAct
