@@ -1,11 +1,11 @@
 # 📋 BILAN COMPLET DES TÂCHES
 
-**Date**: 25 janvier 2026  
+**Date**: 26 janvier 2026  
 **Projet**: IMT AI Agent
 
 ---
 
-## ✅ TÂCHES TERMINÉES (15/18)
+## ✅ TÂCHES TERMINÉES (16/18)
 
 ### **🎯 RAG Vectoriel & FAISS** ✅ COMPLET
 - [x] 5. Corriger build_index.py (découpage intelligent paragraphes)
@@ -13,6 +13,14 @@
 - [x] 7. Remplacer scoring manuel par recherche sémantique
 - [x] 8. Tester avec 5-10 questions (score 0.713 cybersécurité)
 - **Responsable**: Makhtar ✅
+
+### **🔗 Agent LangChain** ✅ RÉACTIVÉ
+- [x] Refactoring complet pour LangChain 1.x
+- [x] Suppression des imports obsolètes (create_react_agent)
+- [x] Architecture simple : ChatGoogleGenerativeAI + tools direct
+- [x] Tests passants (4/4 - 100%)
+- [x] Réactivation dans chainlit_app.py
+- **Responsable**: Maliki ✅
 
 ### **📚 Documentation** ✅ QUASI-COMPLET
 - [x] 1. README finalisé (architecture, stack, équipe)
@@ -34,7 +42,7 @@
 
 ---
 
-## ⏳ TÂCHES RESTANTES (3/18)
+## ⏳ TÂCHES RESTANTES (2/18)
 
 ### **🎨 PRIORITÉ 1 : UI Chainlit** - Diabang
 - [ ] 9. Personnaliser UI : Logo IMT, couleurs, avatar
@@ -43,16 +51,16 @@
 - **Temps estimé**: 2-3 heures
 - **Fichiers**: chainlit_app.py, public/logo.png, .chainlit/config.toml
 
-### **🔍 PRIORITÉ 2 : Langfuse Activation** - Debora
+### **🎤 PRIORITÉ 2 : Présentation** - Maliki
+- [ ] 3. Préparer démo vidéo + slides + rapport
+- **Temps estimé**: 3-4 heures
+- **Format**: PowerPoint/PDF + vidéo 5-10 min
+
+### **🔍 PRIORITÉ 3 : Langfuse Activation** - Debora
 - [ ] 13. Créer compte cloud.langfuse.com
 - [ ] 17. Tester dashboard (vérifier traces)
 - **Temps estimé**: 30 minutes
 - **Action**: Créer compte + ajouter clés dans .env
-
-### **🎤 PRIORITÉ 3 : Présentation** - Maliki
-- [ ] 3. Préparer démo vidéo + slides + rapport
-- **Temps estimé**: 3-4 heures
-- **Format**: PowerPoint/PDF + vidéo 5-10 min
 
 ### **💰 OPTIONNEL : OpenAI** - Maliki
 - [ ] 4. Acheter 5$ crédits OpenAI (cascade complète)
@@ -71,27 +79,28 @@
 | Catégorie | Complété | Restant | % |
 |-----------|----------|---------|---|
 | RAG/FAISS | 4/4 | 0 | ✅ 100% |
+| LangChain | 1/1 | 0 | ✅ 100% |
 | Documentation | 3/3 | 0 | ✅ 100% |
 | Git | 1/1 | 0 | ✅ 100% |
 | Langfuse | 3/6 | 3 | ⏳ 50% |
 | UI Chainlit | 0/4 | 4 | ❌ 0% |
 | Présentation | 0/1 | 1 | ❌ 0% |
-| **TOTAL** | **15/18** | **3** | **🟢 83%** |
+| **TOTAL** | **16/18** | **2** | **🟢 89%** |
 
 ---
 
 ## 🎯 PLAN D'ACTION POUR FINIR
 
-### **Aujourd'hui (25 Jan)** 
+### **Aujourd'hui (26 Jan)** 
 1. **Diabang** : Commencer UI Chainlit (logo, couleurs)
 2. **Debora** : Créer compte Langfuse + tester
 
-### **Demain (26 Jan)**
+### **Demain (27 Jan)**
 3. **Diabang** : Finaliser UI + guide utilisateur
 4. **Debora** : Valider traces Langfuse
 5. **Maliki** : Commencer slides présentation
 
-### **27-28 Jan**
+### **28 Jan**
 6. **Maliki** : Finaliser présentation (démo vidéo + slides)
 7. **Équipe** : Répétition présentation
 

@@ -99,11 +99,6 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
     if not GROK_AVAILABLE or not grok_client:
         return None
     
-    trace = None
-    if LANGFUSE_AVAILABLE:
-        trace = langfuse_client.trace(name="grok_call")
-        trace.span(name="llm", input={"prompt": prompt}, metadata={"model": "grok-beta"})
-    
     try:
         response = grok_client.chat.completions.create(
             model="grok-beta",
@@ -113,14 +108,46 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
         )
         result = response.choices[0].message.content.strip()
         
-        if trace:
-            trace.span(name="llm", output={"response": result}, metadata={"tokens": max_tokens})
+        # Trace Langfuse 3.x avec usage tokens + coûts Grok
+        if LANGFUSE_AVAILABLE:
+            try:
+                # Grok pricing : $5/1M input tokens, $15/1M output tokens
+                usage = response.usage
+                input_tokens = usage.prompt_tokens if usage else 0
+                output_tokens = usage.completion_tokens if usage else 0
+                cost = (input_tokens / 1_000_000 * 5.0) + (output_tokens / 1_000_000 * 15.0)
+                
+                langfuse_client.create_event(
+                    name="grok_call",
+                    metadata={
+                        "model": "grok-beta",
+                        "max_tokens": max_tokens,
+                        "cost_usd": round(cost, 6)
+                    },
+                    input={"prompt": prompt},
+                    output={"response": result},
+                    usage={
+                        "prompt_tokens": input_tokens,
+                        "completion_tokens": output_tokens,
+                        "total_tokens": input_tokens + output_tokens
+                    }
+                )
+            except Exception as trace_error:
+                logger.warning(f"Langfuse trace failed: {trace_error}")
         
         return result
     except Exception as e:
         logger.error(f"Erreur Grok : {e}")
-        if trace:
-            trace.span(name="llm", metadata={"error": str(e)})
+        # Trace error in Langfuse
+        if LANGFUSE_AVAILABLE:
+            try:
+                langfuse_client.create_event(
+                    name="grok_call_error",
+                    metadata={"model": "grok-beta", "error": str(e)},
+                    input={"prompt": prompt}
+                )
+            except:
+                pass
         return None
 
 def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
@@ -136,11 +163,6 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
     if not OPENAI_AVAILABLE or not openai_client:
         return None
     
-    trace = None
-    if LANGFUSE_AVAILABLE:
-        trace = langfuse_client.trace(name="openai_call")
-        trace.span(name="llm", input={"prompt": prompt}, metadata={"model": "gpt-4o-mini"})
-    
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",  # Le moins cher : 0.15$/1M tokens entrée, 0.6$/1M sortie
@@ -150,20 +172,57 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
         )
         result = response.choices[0].message.content.strip()
         
-        if trace:
-            trace.span(name="llm", output={"response": result}, metadata={"tokens": max_tokens})
+        # Trace Langfuse 3.x avec usage tokens + coûts OpenAI
+        if LANGFUSE_AVAILABLE:
+            try:
+                # OpenAI GPT-4o-mini pricing : $0.15/1M input, $0.60/1M output
+                usage = response.usage
+                input_tokens = usage.prompt_tokens if usage else 0
+                output_tokens = usage.completion_tokens if usage else 0
+                cost = (input_tokens / 1_000_000 * 0.15) + (output_tokens / 1_000_000 * 0.60)
+                
+                langfuse_client.create_event(
+                    name="openai_call",
+                    metadata={
+                        "model": "gpt-4o-mini",
+                        "max_tokens": max_tokens,
+                        "cost_usd": round(cost, 6)
+                    },
+                    input={"prompt": prompt},
+                    output={"response": result},
+                    usage={
+                        "prompt_tokens": input_tokens,
+                        "completion_tokens": output_tokens,
+                        "total_tokens": input_tokens + output_tokens
+                    }
+                )
+            except Exception as trace_error:
+                logger.warning(f"Langfuse trace failed: {trace_error}")
         
         return result
     except Exception as e:
         logger.error(f"Erreur OpenAI : {e}")
-        if trace:
-            trace.span(name="llm", metadata={"error": str(e)})
+        # Trace error in Langfuse
+        if LANGFUSE_AVAILABLE:
+            try:
+                langfuse_client.create_event(
+                    name="openai_call_error",
+                    metadata={"model": "gpt-4o-mini", "error": str(e)},
+                    input={"prompt": prompt}
+                )
+            except:
+                pass
         return None
 
 def _call_gemini(prompt: str) -> Optional[str]:
     """Appelle les LLMs disponibles avec ordre de priorité intelligent.
     
-    Ordre de priorité : Grok → OpenAI → Gemini → None
+    ✨ NOUVEL ORDRE : Gemini (gratuit) → Grok → OpenAI → None
+    
+    Gemini en priorité car :
+    - Free tier : 15 req/min, 1500 req/jour
+    - Gratuit (0$) avec tracking tokens dans Langfuse
+    - Modèle performant : gemini-2.0-flash-exp
     
     Instructions pour l'IA:
     Tu es l'expert de l'IMT Dakar. Utilise les documents fournis pour répondre. 
@@ -172,25 +231,46 @@ def _call_gemini(prompt: str) -> Optional[str]:
 
     Retourne la chaîne textuelle de la réponse, ou `None` en cas d'erreur.
     """
-    # Priorité 1 : Essayer Grok si disponible
+    # ⭐ PRIORITÉ 1 : Essayer Gemini (GRATUIT)
+    if GENAI_AVAILABLE:
+        logger.debug("🥇 Tentative Gemini (priorité 1)...")
+        result = _call_gemini_direct(prompt)
+        if result:
+            logger.info("✅ Gemini a répondu")
+            return result
+        logger.info("🔄 Gemini échoué, fallback vers Grok...")
+    
+    # Priorité 2 : Essayer Grok
     if GROK_AVAILABLE:
+        logger.debug("🥈 Tentative Grok (priorité 2)...")
         result = _call_grok(prompt, max_tokens=150)
         if result:
+            logger.info("✅ Grok a répondu")
             return result
         logger.info("🔄 Grok échoué, fallback vers OpenAI...")
     
-    # Priorité 2 : Essayer OpenAI (économique)
+    # Priorité 3 : Essayer OpenAI (économique mais payant)
     if OPENAI_AVAILABLE:
+        logger.debug("🥉 Tentative OpenAI (priorité 3)...")
         result = _call_openai(prompt, max_tokens=200)
         if result:
+            logger.info("✅ OpenAI a répondu")
             return result
-        logger.info("🔄 OpenAI échoué, fallback vers Gemini...")
+        logger.info("❌ OpenAI échoué, aucun LLM disponible")
     
-    # Priorité 3 : Essayer Gemini
-    if not GENAI_AVAILABLE:
-        logger.debug("Gemini non disponible, retour None")
-        return None
+    # Tous les LLM ont échoué
+    logger.debug("Tous les LLM ont échoué, retour None")
+    return None
 
+def _call_gemini_direct(prompt: str) -> Optional[str]:
+    """Appel direct à Gemini (fonction interne).
+    
+    Returns:
+        La réponse de Gemini ou None si erreur.
+    """
+    if not GENAI_AVAILABLE:
+        return None
+    
     try:
         logger.debug(f"Appel Gemini avec prompt: {prompt[:50]}...")
         response = client.models.generate_content(
@@ -203,12 +283,61 @@ def _call_gemini(prompt: str) -> Optional[str]:
         )
         result = response.text.strip() if response.text else None
         logger.debug(f"Réponse Gemini: {result}")
+        
+        # Track dans Langfuse avec usage tokens (Gemini gratuit = 0$)
+        if LANGFUSE_AVAILABLE:
+            try:
+                # Gemini free tier : prompt_tokens + completion_tokens visibles
+                usage = getattr(response, 'usage_metadata', None)
+                usage_dict = {}
+                if usage:
+                    usage_dict = {
+                        "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
+                        "completion_tokens": getattr(usage, 'candidates_token_count', 0),
+                        "total_tokens": getattr(usage, 'total_token_count', 0)
+                    }
+                
+                langfuse_client.create_event(
+                    name="gemini_call",
+                    metadata={
+                        "model": "gemini-2.0-flash-exp",
+                        "temperature": 0.3,
+                        "max_tokens": 300,
+                        "cost": 0.0  # Free tier
+                    },
+                    input={"prompt": prompt},
+                    output={"response": result},
+                    usage=usage_dict if usage_dict else None
+                )
+            except Exception as trace_error:
+                logger.warning(f"Langfuse trace failed: {trace_error}")
+        
         return result
     except AttributeError as e:
         logger.error(f"Erreur de structure de réponse Gemini : {e}")
+        # Track error
+        if LANGFUSE_AVAILABLE:
+            try:
+                langfuse_client.create_event(
+                    name="gemini_call_error",
+                    metadata={"model": "gemini-2.0-flash-exp", "error": str(e)},
+                    input={"prompt": prompt}
+                )
+            except:
+                pass
         return None
     except Exception as e:
         logger.error(f"Erreur lors de l'appel Gemini : {e}")
+        # Track error
+        if LANGFUSE_AVAILABLE:
+            try:
+                langfuse_client.create_event(
+                    name="gemini_call_error",
+                    metadata={"model": "gemini-2.0-flash-exp", "error": str(e)},
+                    input={"prompt": prompt}
+                )
+            except:
+                pass
         return None
 
 
