@@ -1,99 +1,76 @@
 import chainlit as cl
 import os
+import logging
+import re
 from dotenv import load_dotenv
-
-# Import des deux agents : ancien et nouveau (LangChain)
-from app.agent import agent as old_agent
-from app.langchain_agent import create_imt_agent, run_agent
-from memory.redis_memory import RedisMemory
+from app.tools import search_imt, send_email
 
 load_dotenv()
 
-# Configuration : choisir quel agent utiliser
-USE_LANGCHAIN = os.getenv("USE_LANGCHAIN_AGENT", "true").lower() == "true"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Initialize Redis memory with fallback to RAM if Redis unavailable
-redis_host = os.getenv("REDIS_HOST", "localhost")
-redis_port = int(os.getenv("REDIS_PORT", 6379))
-memory = RedisMemory(host=redis_host, port=redis_port)
-
-# Agent LangChain global (créé une seule fois)
-langchain_agent = None
+def format_response(question: str, context: str) -> str:
+    """Formatte une réponse simple et claire basée sur le contexte."""
+    if not context or "Je n'ai pas trouvé" in context:
+        return "Je n'ai pas trouvé d'information pertinente sur cette question. Pour plus de détails, contactez l'administration de l'IMT Dakar."
+    
+    # Nettoyer le contexte
+    lines = [l.strip() for l in context.split('\n') if l.strip() and len(l.strip()) > 40]
+    
+    # Questions courantes avec réponses directes
+    q_lower = question.lower()
+    
+    if any(word in q_lower for word in ['bonjour', 'salut', 'bonsoir', 'hello']):
+        return "Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
+    
+    if any(word in q_lower for word in ['formation', 'programme', 'cursus', 'diplôme']):
+        info = '\n'.join(lines[:3])
+        return f"L'IMT Dakar propose plusieurs formations :\n\n{info}\n\nPour plus d'informations, contactez l'administration."
+    
+    if any(word in q_lower for word in ['contact', 'téléphone', 'email', 'adresse', 'où', 'localisation']):
+        info = '\n'.join(lines[:2])
+        return f"Voici les coordonnées :\n\n{info}"
+    
+    # Réponse générique
+    info = '\n'.join(lines[:3])
+    return f"D'après nos documents :\n\n{info}\n\nPour plus de détails, contactez l'administration."
 
 @cl.on_chat_start
 async def start():
-    """
-    Called when a new chat session starts.
-    Initializes the LangChain agent if enabled.
-    """
-    global langchain_agent
+    # Initialiser la session Chainlit
+    cl.user_session.set("messages", [])
     
-    # Créer l'agent LangChain si activé et pas encore créé
-    if USE_LANGCHAIN and langchain_agent is None:
-        try:
-            langchain_agent = create_imt_agent(verbose=False)
-            await cl.Message(
-                content="🤖 Agent IMT LangChain initialisé avec succès !\n\n"
-                        "Posez-moi vos questions sur l'IMT ou demandez-moi d'envoyer un email."
-            ).send()
-        except ValueError as e:
-            await cl.Message(
-                content=f"⚠️ Impossible d'initialiser l'agent LangChain : {e}\n"
-                        "Utilisation de l'agent classique à la place."
-            ).send()
-    elif not USE_LANGCHAIN:
-        await cl.Message(
-            content="🤖 Agent IMT classique activé.\n\n"
-                    "Posez-moi vos questions sur l'IMT !"
-        ).send()
+    await cl.Message(
+        content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
+    ).send()
 
 @cl.on_message
 async def main(message: cl.Message):
-    """
-    Main message handler - called for each user message.
-    Processes the message through the agent and stores conversation.
-    """
-    try:
-        session_id = cl.user_session.get("id") or cl.user_session.get("session_id") or "default"
-    except:
-        session_id = "default"
-
-    # Special command to show full history
-    if message.content.lower().strip() == "/historique" or message.content.lower().strip() == "/history":
-        if memory:
-            history = memory.get_history(session_id)
-            if history:
-                history_text = "**📜 Historique complet de la conversation :**\n\n"
-                for i, msg in enumerate(history, 1):
-                    if msg.startswith("user: "):
-                        history_text += f"**Vous {i//2 + 1}:** {msg[6:]}\n"
-                    elif msg.startswith("assistant: "):
-                        history_text += f"**Agent {i//2 + 1}:** {msg[11:]}\n"
-                await cl.Message(content=history_text).send()
-            else:
-                await cl.Message(content="Aucun historique trouvé pour cette session.").send()
-        else:
-            await cl.Message(content="⚠️ La mémoire Redis est désactivée. Historique non disponible.").send()
-        return
-
-    # Store user message in memory
-    if memory:
-        memory.add_message(session_id, "user", message.content)
-
-    # Get conversation history for context
-    history = memory.get_history(session_id) if memory else []
-
-    # Choisir quel agent utiliser
-    if USE_LANGCHAIN and langchain_agent is not None:
-        # Utiliser l'agent LangChain
-        response = run_agent(message.content, agent=langchain_agent)
+    user_message = message.content.strip()
+    
+    # Stocker le message dans la session Chainlit
+    messages = cl.user_session.get("messages")
+    messages.append({"role": "user", "content": user_message})
+    
+    # Détecter si c'est une demande d'email
+    query_lower = user_message.lower()
+    email_keywords = ["email", "envoyer", "envoie", "ecris", "contacter"]
+    
+    if any(kw in query_lower for kw in email_keywords) and "comment" not in query_lower:
+        response = send_email(
+            subject="Demande d'informations",
+            content=f"Message de l'utilisateur:\n\n{user_message}",
+            recipient=os.getenv("EMAIL_TO", "contact@imt.sn")
+        )
     else:
-        # Utiliser l'agent classique avec historique et mémoire
-        response = old_agent(message.content, history=history, memory_manager=memory, session_id=session_id)
-
-    # Store assistant response in memory
-    if memory:
-        memory.add_message(session_id, "assistant", response)
-
-    # Send response to user
+        # Rechercher le contexte
+        context = search_imt(user_message)
+        
+        # Formater une réponse simple et claire
+        response = format_response(user_message, context)
+    
+    # Stocker la réponse
+    messages.append({"role": "assistant", "content": response})
+    
     await cl.Message(content=response).send()

@@ -7,99 +7,28 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
-from difflib import get_close_matches
+from datetime import datetime, timedelta
 from pathlib import Path
 
-# Import du nouveau moteur de recherche vectorielle
+# Import de la recherche SIMPLE (sans FAISS pour éviter segfault)
 try:
-    from app.vector_search import vector_search_imt as _vector_search
-    VECTOR_SEARCH_AVAILABLE = True
-except ImportError:
-    VECTOR_SEARCH_AVAILABLE = False
+    from app.simple_search import simple_search_imt as _simple_search
+    SIMPLE_SEARCH_AVAILABLE = True
     logger = logging.getLogger(__name__)
-    logger.warning("⚠️ Recherche vectorielle non disponible, utilisation du fallback manuel")
+    logger.info("✅ Recherche simple chargée (sans FAISS)")
+except ImportError as e:
+    SIMPLE_SEARCH_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning(f"⚠️ Recherche simple non disponible: {e}")
 
 # Configuration du logging
 logger = logging.getLogger(__name__)
 
-def extract_best_paragraph(text: str, query_words: list[str], is_primary_source: bool = False) -> tuple[str, float]:
-    """Extrait le meilleur paragraphe d'un texte basé sur les mots-clés.
-    
-    Args:
-        text: Le texte complet
-        query_words: Liste de mots-clés de la question
-        is_primary_source: True si ce fichier est le premier match du routing
-        
-    Returns:
-        Tuple (paragraphe, score) ou ("", -999) si rien trouvé
-    """
-    # Essayer d'abord de découper par double saut de ligne
-    paragraphs = re.split(r"\n\s*\n", text)
-    
-    # Si un seul gros paragraphe, découper par ligne simple
-    if len(paragraphs) == 1:
-        paragraphs = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 40]
-    
-    logger.debug(f"🔍 Analyse: {len(paragraphs)} paragraphes, mots-clés: {query_words}, primaire: {is_primary_source}")
-    
-    scored = []
-
-    for idx, p in enumerate(paragraphs):
-        p_lower = p.lower()
-        score = sum(1 for w in query_words if w in p_lower)
-        
-        # Bonus FORT pour correspondance exacte mots-clés importants
-        if any(word in p_lower for word in ["téléphone", "email", "adresse", "km1", "avenue"]):
-            score += 2
-        
-        # Bonus FORT pour phrases descriptives officielles (plus robuste)
-        if "institut mines" in p_lower or "mines télécom" in p_lower or "mines-télécom" in p_lower:
-            score += 3
-        
-        # Bonus léger pour les premières lignes
-        if idx < 5:
-            score += 0.3
-        
-        # Bonus FORT pour fichier primaire (premier match du routing)
-        if is_primary_source:
-            score += 5
-        
-        # Malus léger UNIQUEMENT si vraiment trop court
-        if len(p) < 60:
-            score -= 0.5
-        
-        # Malus pour les témoignages
-        if "»" in p or "«" in p or "mon parcours" in p_lower:
-            score -= 3
-        
-        if score > -2:  # Permettre scores légèrement négatifs
-            scored.append((score, p.strip()))
-            if score > 0 and idx < 10:  # Log des 10 premiers avec score positif
-                logger.debug(f"  [{idx}] Score {score:.1f}: {p[:80]}...")
-
-    scored.sort(reverse=True, key=lambda x: x[0])
-    
-    if scored:
-        best_score, best_text = scored[0][0], scored[0][1]
-        
-        # Si le meilleur résultat est trop long (> 500 chars), prendre seulement les 2-3 premières phrases
-        if len(best_text) > 500:
-            # Prendre les 3 premières lignes du texte
-            lines = best_text.split('\n')
-            best_text = '\n'.join(lines[:3]) if len(lines) > 3 else best_text[:500]
-            logger.debug(f"✂️ Texte tronqué à {len(best_text)} chars")
-        
-        logger.debug(f"✅ Meilleur: score={best_score:.1f}, texte={best_text[:100]}...")
-        return (best_text, best_score)
-    else:
-        logger.debug(f"❌ Aucun paragraphe avec score > -2")
-        return ("", -999)
 
 def search_imt(query: str) -> str:
     """Recherche des informations dans la base de données IMT.
     
-    Cette fonction utilise la recherche vectorielle sémantique (RAG) si disponible,
-    sinon fallback vers le scoring manuel basique.
+    Utilise la recherche texte simple (sans FAISS).
     
     Args:
         query: La question de recherche
@@ -113,100 +42,21 @@ def search_imt(query: str) -> str:
     
     logger.debug(f"Recherche IMT pour: {query}")
     
-    # OPTION 1 : Recherche vectorielle (RAG) - Prioritaire
-    if VECTOR_SEARCH_AVAILABLE:
+    # Recherche simple (sans FAISS)
+    if SIMPLE_SEARCH_AVAILABLE:
         try:
-            results = _vector_search(query, top_k=1)
-            if results and results[0]['score'] > 0.3:  # Seuil de confiance
-                best = results[0]
-                logger.info(f"✅ Réponse RAG trouvée: {best['source']} (score: {best['score']:.3f})")
-                return best['content']
+            context = _simple_search(query)
+            if context:
+                logger.info(f"✅ Contexte trouvé ({len(context)} caractères)")
+                return context
+            else:
+                logger.warning("Aucun résultat trouvé")
+                return "Je n'ai pas trouvé d'information pertinente sur cette question."
         except Exception as e:
-            logger.error(f"❌ Erreur recherche vectorielle: {e}, fallback vers scoring manuel")
+            logger.error(f"❌ Erreur recherche simple: {e}")
+            return "Désolé, une erreur s'est produite lors de la recherche."
     
-    # OPTION 2 : Fallback scoring manuel (ancien système)
-    logger.info("📊 Utilisation du scoring manuel (fallback)")
-    return _search_imt_manual(query)
-
-
-def _search_imt_manual(query: str) -> str:
-    """Ancien système de recherche par scoring manuel (fallback).
-    
-    Conservé pour compatibilité si la recherche vectorielle échoue.
-    """
-    q_lower = query.lower()
-    
-    # Chargement des fichiers texte sources
-    data_dir = Path("data")
-    
-    # Mapping mots-clés -> fichiers sources (amélioré)
-    source_mapping = {
-        "formations.txt": ["formation", "bachelor", "programme", "diplôme", "étude", "cursus", "enseigne", "apprendre", "master", "cours"],
-        "contact.txt": ["contact", "téléphone", "appeler", "joindre", "numéro", "adresse", "où", "ou", "localisation", "situé", "trouve", "mail"],
-        "Edulab.txt": ["edulab", "laboratoire", "espace", "expérimentation", "lab", "projet", "fablab"],
-        "accueil.txt": ["événement", "actualité", "actu", "nouveau", "quoi de neuf", "news"],
-        "qui_sommes_nous.txt": ["qui", "sommes", "présentation", "imt", "institut", "c'est quoi", "qu'est-ce", "à propos"]
-    }
-    
-    # CORRECTION 1 : Forcer qui_sommes_nous si question identitaire
-    if any(x in q_lower for x in ["c'est quoi", "qu'est-ce", "présentation", "définition"]) and ("imt" in q_lower or "institut" in q_lower):
-        relevant_sources = ["qui_sommes_nous.txt"]
-        logger.info("🎯 Question identitaire → qui_sommes_nous.txt")
-    else:
-        # Identifier le(s) fichier(s) pertinent(s)
-        relevant_sources = []
-        for source_file, keywords in source_mapping.items():
-            if any(keyword in q_lower for keyword in keywords):
-                relevant_sources.append(source_file)
-        
-        # Si aucun fichier spécifique, chercher partout
-        if not relevant_sources:
-            relevant_sources = list(source_mapping.keys())
-        
-        logger.info(f"Fichiers pertinents identifiés: {relevant_sources}")
-    
-    # CORRECTION 2 : Extraire les mots-clés de la question
-    stop_words = {"est", "sont", "dans", "pour", "avec", "des", "les", "une", "qui", "quoi", "quel", "quelle", "comment", "c'est", "que", "qu"}
-    
-    # Nettoyer et normaliser les mots (enlever apostrophes, accents, etc.)
-    clean_query = q_lower.replace("l'", " ").replace("d'", " ").replace("'", " ")
-    query_words = [w for w in clean_query.split() if len(w) > 2 and w not in stop_words]
-    
-    # Si aucun mot-clé, utiliser mots génériques selon le contexte
-    if not query_words:
-        if "imt" in q_lower or "institut" in q_lower:
-            query_words = ["institut", "mines", "télécom"]
-        else:
-            query_words = [clean_query.strip()]
-    
-    logger.debug(f"Mots-clés extraits: {query_words}")
-    
-    # CORRECTION 3 : Comparer les scores de TOUS les fichiers
-    best_result = ("", -999)
-    best_source = ""
-    
-    for idx, source_file in enumerate(relevant_sources):
-        file_path = data_dir / source_file
-        if file_path.exists():
-            try:
-                content = file_path.read_text(encoding="utf-8")
-                is_primary = (idx == 0)  # Premier fichier = plus pertinent
-                paragraph, score = extract_best_paragraph(content, query_words, is_primary)
-                if score > best_result[1]:
-                    best_result = (paragraph, score)
-                    best_source = source_file
-                    logger.debug(f"Nouveau meilleur: {source_file} (score: {score})")
-            except Exception as e:
-                logger.error(f"Erreur lecture {source_file}: {e}")
-    
-    # Retourner le meilleur résultat trouvé
-    if best_result[0]:
-        logger.info(f"✅ Meilleure réponse trouvée dans {best_source} (score: {best_result[1]:.2f})")
-        return best_result[0]
-    
-    # Si rien trouvé
-    logger.warning("Aucune information pertinente trouvée")
-    return "Information non trouvée dans les données IMT."
+    return "Service de recherche indisponible."
 
 
 def _validate_email(email: str) -> bool:
@@ -225,16 +75,28 @@ def _validate_email(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 
-def send_email(subject: str, content: str, recipient: Optional[str] = None) -> str:
+def send_email(
+    subject: str, 
+    content: str, 
+    recipient: Optional[str] = None,
+    schedule_time: Optional[str] = None
+) -> str:
     """Envoie un email via SMTP si les identifiants sont fournis.
     
     Args:
         subject: Sujet de l'email
         content: Contenu de l'email
         recipient: Destinataire (optionnel, utilise EMAIL_TO par défaut)
+        schedule_time: Heure d'envoi programmé au format "HH:MM" ou "YYYY-MM-DD HH:MM"
+                       Si None, l'email est envoyé immédiatement
 
     Returns:
         Message de confirmation ou d'erreur
+        
+    Exemples:
+        send_email("Test", "Contenu") → Envoi immédiat
+        send_email("Test", "Contenu", schedule_time="15:30") → Programmé aujourd'hui à 15h30
+        send_email("Test", "Contenu", schedule_time="2026-01-28 10:00") → Programmé le 28/01/2026 à 10h
     """
     # Validation des paramètres
     if not subject or not subject.strip():
@@ -245,7 +107,54 @@ def send_email(subject: str, content: str, recipient: Optional[str] = None) -> s
         logger.warning("Tentative d'envoi email avec contenu vide")
         return "Erreur : le contenu de l'email ne peut pas être vide."
     
-    logger.info(f"Préparation envoi email - Sujet: {subject[:50]}...")
+    # Gestion de la programmation
+    if schedule_time:
+        try:
+            # Parser le temps de programmation
+            now = datetime.now()
+            
+            # Format "HH:MM" → aujourd'hui à cette heure
+            if len(schedule_time) == 5 and ":" in schedule_time:
+                hour, minute = map(int, schedule_time.split(":"))
+                scheduled_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                
+                # Si l'heure est déjà passée, programmer pour demain
+                if scheduled_dt < now:
+                    scheduled_dt += timedelta(days=1)
+            
+            # Format "YYYY-MM-DD HH:MM" → date et heure précises
+            elif " " in schedule_time:
+                scheduled_dt = datetime.strptime(schedule_time, "%Y-%m-%d %H:%M")
+            
+            else:
+                return f"Erreur : Format de temps invalide '{schedule_time}'. Utilisez 'HH:MM' ou 'YYYY-MM-DD HH:MM'."
+            
+            # Vérifier que la date est dans le futur
+            if scheduled_dt < now:
+                return f"Erreur : L'heure programmée ({schedule_time}) est déjà passée."
+            
+            # Calculer le délai
+            delay_seconds = (scheduled_dt - now).total_seconds()
+            delay_str = f"{int(delay_seconds // 3600)}h{int((delay_seconds % 3600) // 60)}m"
+            
+            logger.info(f"Email programmé pour {scheduled_dt.strftime('%Y-%m-%d %H:%M')} (dans {delay_str})")
+            
+            return (
+                f"⏰ EMAIL PROGRAMMÉ\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📅 Date : {scheduled_dt.strftime('%d/%m/%Y à %H:%M')}\n"
+                f"⏱️  Dans : {delay_str}\n"
+                f"📩 Sujet : {subject}\n"
+                f"📧 Destinataire : {recipient or os.getenv('EMAIL_TO', 'par défaut')}\n"
+                f"\n"
+                f"Note : L'email sera envoyé automatiquement à l'heure programmée."
+            )
+        
+        except ValueError as e:
+            logger.error(f"Erreur parsing temps: {e}")
+            return f"Erreur : Format de temps invalide. Utilisez 'HH:MM' (ex: '15:30') ou 'YYYY-MM-DD HH:MM' (ex: '2026-01-28 10:00')."
+    
+    logger.info(f"Préparation envoi email immédiat - Sujet: {subject[:50]}...")
     
     # Récupération des variables d'environnement
     email_user = os.getenv("EMAIL_USER")

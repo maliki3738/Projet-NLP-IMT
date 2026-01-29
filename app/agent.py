@@ -7,21 +7,26 @@ from app.tools import search_imt, send_email
 from typing import Optional
 
 # Tentative d'import Langfuse (observabilité)
-try:
-    from langfuse import Langfuse
-    LANGFUSE_AVAILABLE = True
-    langfuse_client = Langfuse(
-        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-        host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
-    )
+LANGFUSE_AVAILABLE = False
+langfuse_client = None
+
+if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
+    try:
+        from langfuse import Langfuse
+        langfuse_client = Langfuse(
+            public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+            secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+            host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        )
+        LANGFUSE_AVAILABLE = True
+        logger = logging.getLogger(__name__)
+        logger.info("✅ Langfuse configuré avec succès")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"⚠️ Langfuse non disponible : {e}")
+else:
     logger = logging.getLogger(__name__)
-    logger.info("✅ Langfuse configuré avec succès")
-except Exception as e:
-    LANGFUSE_AVAILABLE = False
-    langfuse_client = None
-    logger = logging.getLogger(__name__)
-    logger.warning(f"⚠️ Langfuse non disponible : {e}")
+    logger.debug("Langfuse désactivé (pas de clés configurées)")
 
 load_dotenv()
 
@@ -42,20 +47,24 @@ logger = logging.getLogger(__name__)
 # 3) Les outils `search_imt` et `send_email` restent inchangés et sont appelés selon la décision.
 
 # Tentative d'import du SDK Gemini (optionnelle)
+GENAI_AVAILABLE = False
+API_KEY = None
 try:
-    from google import genai
-    from google.genai import types
-    GENAI_AVAILABLE = True
+    import requests
     API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if API_KEY:
-        client = genai.Client(api_key=API_KEY)
-        logger.info("✅ Gemini configuré avec succès")
+        # Test rapide de la clé
+        test_url = f"https://generativelanguage.googleapis.com/v1/models?key={API_KEY}"
+        response = requests.get(test_url, timeout=5)
+        if response.status_code == 200:
+            GENAI_AVAILABLE = True
+            logger.info("✅ Gemini API REST configuré avec succès")
+        else:
+            logger.warning(f"⚠️ Clé API Gemini invalide (status {response.status_code})")
     else:
-        GENAI_AVAILABLE = False
-        logger.warning("⚠️  Clé API Gemini manquante - Fallback heuristique activé")
+        logger.warning("⚠️ Clé API Gemini manquante - Fallback heuristique activé")
 except Exception as e:
-    GENAI_AVAILABLE = False
-    logger.warning(f"⚠️  Gemini non disponible : {e} - Fallback heuristique activé")
+    logger.warning(f"⚠️ Gemini non disponible : {e} - Fallback heuristique activé")
 
 # Tentative d'import Grok/xAI comme alternative
 GROK_AVAILABLE = False
@@ -85,6 +94,9 @@ try:
         logger.info("✅ OpenAI GPT configuré avec succès")
 except Exception as e:
     logger.info(f"💡 OpenAI non disponible : {e}")
+
+# Flag global pour tracker si tous les LLMs ont échoué (éviter de les rappeler)
+_all_llms_failed = False
 
 def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
     """Appelle Grok via l'API xAI avec traçabilité Langfuse.
@@ -231,6 +243,8 @@ def _call_gemini(prompt: str) -> Optional[str]:
 
     Retourne la chaîne textuelle de la réponse, ou `None` en cas d'erreur.
     """
+    global _all_llms_failed
+    
     # ⭐ PRIORITÉ 1 : Essayer Gemini (GRATUIT)
     if GENAI_AVAILABLE:
         logger.debug("🥇 Tentative Gemini (priorité 1)...")
@@ -258,83 +272,88 @@ def _call_gemini(prompt: str) -> Optional[str]:
             return result
         logger.info("❌ OpenAI échoué, aucun LLM disponible")
     
-    # Tous les LLM ont échoué
+    # Tous les LLM ont échoué - setter le flag pour éviter de les rappeler
     logger.debug("Tous les LLM ont échoué, retour None")
+    _all_llms_failed = True
     return None
 
 def _call_gemini_direct(prompt: str) -> Optional[str]:
-    """Appel direct à Gemini (fonction interne).
+    """Appel direct à Gemini via API REST (plus stable que le SDK).
     
     Returns:
         La réponse de Gemini ou None si erreur.
     """
-    if not GENAI_AVAILABLE:
+    if not GENAI_AVAILABLE or not API_KEY:
         return None
     
     try:
-        logger.debug(f"Appel Gemini avec prompt: {prompt[:50]}...")
-        response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.3,
-                max_output_tokens=300,
-            )
-        )
-        result = response.text.strip() if response.text else None
-        logger.debug(f"Réponse Gemini: {result}")
+        import requests
+        import json
         
-        # Track dans Langfuse avec usage tokens (Gemini gratuit = 0$)
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 300,
+            }
+        }
+        
+        logger.debug(f"Appel Gemini API REST avec prompt: {prompt[:50]}...")
+        response = requests.post(url, json=payload, timeout=30)
+        
+        if response.status_code != 200:
+            logger.error(f"Gemini API error {response.status_code}: {response.text[:200]}")
+            return None
+        
+        data = response.json()
+        
+        # Extraction du texte de la réponse
+        if 'candidates' not in data or not data['candidates']:
+            logger.warning("Réponse Gemini vide ou malformée")
+            return None
+        
+        result = data['candidates'][0]['content']['parts'][0]['text'].strip()
+        logger.debug(f"Réponse Gemini: {result[:100]}...")
+        
+        # Track dans Langfuse avec usage tokens
         if LANGFUSE_AVAILABLE:
             try:
-                # Gemini free tier : prompt_tokens + completion_tokens visibles
-                usage = getattr(response, 'usage_metadata', None)
-                usage_dict = {}
-                if usage:
-                    usage_dict = {
-                        "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
-                        "completion_tokens": getattr(usage, 'candidates_token_count', 0),
-                        "total_tokens": getattr(usage, 'total_token_count', 0)
-                    }
+                usage = data.get('usageMetadata', {})
+                usage_dict = {
+                    "prompt_tokens": usage.get('promptTokenCount', 0),
+                    "completion_tokens": usage.get('candidatesTokenCount', 0),
+                    "total_tokens": usage.get('totalTokenCount', 0)
+                }
                 
                 langfuse_client.create_event(
                     name="gemini_call",
                     metadata={
-                        "model": "gemini-2.0-flash-exp",
+                        "model": "gemini-2.0-flash",
                         "temperature": 0.3,
                         "max_tokens": 300,
                         "cost": 0.0  # Free tier
                     },
                     input={"prompt": prompt},
                     output={"response": result},
-                    usage=usage_dict if usage_dict else None
+                    usage=usage_dict
                 )
             except Exception as trace_error:
                 logger.warning(f"Langfuse trace failed: {trace_error}")
         
         return result
-    except AttributeError as e:
-        logger.error(f"Erreur de structure de réponse Gemini : {e}")
-        # Track error
-        if LANGFUSE_AVAILABLE:
-            try:
-                langfuse_client.create_event(
-                    name="gemini_call_error",
-                    metadata={"model": "gemini-2.0-flash-exp", "error": str(e)},
-                    input={"prompt": prompt}
-                )
-            except:
-                pass
-        return None
     except Exception as e:
-        logger.error(f"Erreur lors de l'appel Gemini : {e}")
-        # Track error
+        error_msg = str(e)
+        logger.error(f"Erreur lors de l'appel Gemini : {error_msg[:200]}")
         if LANGFUSE_AVAILABLE:
             try:
                 langfuse_client.create_event(
                     name="gemini_call_error",
-                    metadata={"model": "gemini-2.0-flash-exp", "error": str(e)},
-                    input={"prompt": prompt}
+                    metadata={"model": "gemini-2.0-flash", "error": error_msg[:500]},
+                    input={"prompt": prompt[:200]}
                 )
             except:
                 pass
@@ -545,6 +564,8 @@ def _deduplicate_lines(text: str) -> str:
 
 def reformulate_answer(question: str, context: str) -> str:
     """Reformule la réponse en utilisant Grok/Gemini avec des instructions claires."""
+    global _all_llms_failed
+    
     if not context or context.strip() == "":
         logger.warning("Contexte vide pour reformulation")
         return "Désolé, je n'ai pas trouvé d'information pertinente sur cette question."
@@ -553,8 +574,10 @@ def reformulate_answer(question: str, context: str) -> str:
     context = _deduplicate_lines(context.strip())
     context = context.replace('===', '').replace('[', '').replace(']', '')
     
-    # Essayer avec Grok/Gemini avec prompt amélioré
-    prompt = f"""Tu es un assistant expert de l'Institut Mines-Télécom (IMT) à Dakar.
+    # Ne PAS essayer les LLMs s'ils ont tous échoué (évite le segfault avec Gemini SDK)
+    if not _all_llms_failed and (GENAI_AVAILABLE or GROK_AVAILABLE or OPENAI_AVAILABLE):
+        try:
+            prompt = f"""Tu es un assistant expert de l'Institut Mines-Télécom (IMT) à Dakar.
 
 CONTEXTE DOCUMENTAIRE :
 {context}
@@ -571,17 +594,21 @@ INSTRUCTIONS IMPORTANTES :
 - Réponds en phrases complètes et polies
 
 RÉPONSE :"""
-    
-    llm_response = _call_gemini(prompt)
-    if llm_response:
-        return llm_response
+            
+            llm_response = _call_gemini(prompt)
+            if llm_response:
+                return llm_response
+        except Exception as e:
+            logger.debug(f"LLM reformulation failed: {e}")
     
     # Fallback intelligent : extraire le meilleur paragraphe du contexte
-    logger.info("Utilisation du fallback intelligent")
+    logger.info("💡 Utilisation du fallback intelligent (extraction directe)")
     lines = [l.strip() for l in context.split('\n') if l.strip() and len(l.strip()) > 40]
     if lines:
-        return '\n'.join(lines[:3])  # Retourner les 3 premières lignes pertinentes
-    return context[:500]
+        # Retourner les 3 premières lignes pertinentes avec formatage
+        result = '\n\n'.join(lines[:3])
+        return f"📚 D'après nos documents :\n\n{result}\n\n💡 Pour plus d'informations, contactez l'administration de l'IMT Dakar."
+    return f"📚 Voici ce que j'ai trouvé :\n\n{context[:500]}\n\n💡 Pour plus d'informations, contactez l'administration."
 
 if __name__ == "__main__":
     print("Agent IMT prêt\n")
