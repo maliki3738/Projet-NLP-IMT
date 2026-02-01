@@ -106,6 +106,12 @@ name = "Agent IMT Dakar"
 
 # default_theme = "dark"
 
+# Force l'ouverture de la sidebar
+default_sidebar_state = "open"
+
+# Ne pas afficher le readme par défaut
+show_readme_as_default = false
+
 # Force a specific language for all users (e.g., "en-US", "he-IL", "fr-FR")
 # If not set, the browser's language will be used
 language = "fr-FR"

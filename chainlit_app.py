@@ -2,13 +2,23 @@ import chainlit as cl
 import os
 import logging
 import re
+import uuid
 from dotenv import load_dotenv
 from app.tools import search_imt, send_email
+from memory.redis_memory import RedisMemory
+from app.mysql_data_layer import MySQLDataLayer
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+memory = RedisMemory()
+
+
+@cl.data_layer
+def get_data_layer():
+    return MySQLDataLayer.from_env()
 
 def format_response(question: str, context: str) -> str:
     """Formatte une réponse simple et claire basée sur le contexte."""
@@ -38,9 +48,13 @@ def format_response(question: str, context: str) -> str:
 
 @cl.on_chat_start
 async def start():
-    # Initialiser la session Chainlit
+    session_id = str(uuid.uuid4())
+    memory.create_session(session_id)
+    cl.user_session.set("session_id", session_id)
     cl.user_session.set("messages", [])
-    
+
+    logger.info(f"🆕 Nouvelle session créée: {session_id}")
+
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
     ).send()
@@ -48,10 +62,19 @@ async def start():
 @cl.on_message
 async def main(message: cl.Message):
     user_message = message.content.strip()
+
+    session_id = cl.user_session.get("session_id")
     
     # Stocker le message dans la session Chainlit
     messages = cl.user_session.get("messages")
+    if messages is None:
+        messages = []
+        cl.user_session.set("messages", messages)
     messages.append({"role": "user", "content": user_message})
+
+    # Ajout Redis
+    if session_id:
+        memory.add_message(session_id, "user", user_message)
     
     # Détecter si c'est une demande d'email
     query_lower = user_message.lower()
@@ -72,5 +95,9 @@ async def main(message: cl.Message):
     
     # Stocker la réponse
     messages.append({"role": "assistant", "content": response})
+
+    # Ajout Redis
+    if session_id:
+        memory.add_message(session_id, "assistant", response)
     
     await cl.Message(content=response).send()

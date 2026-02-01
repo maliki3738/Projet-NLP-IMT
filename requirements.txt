@@ -4,6 +4,7 @@ chainlit>=1.1.0
 requests
 beautifulsoup4
 pytest
+aiomysql
 
 # LangChain pour orchestration d'agent
 langchain>=1.0.0

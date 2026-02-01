@@ -1,0 +1,67 @@
+CREATE DATABASE IF NOT EXISTS chainlit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE chainlit;
+
+CREATE TABLE IF NOT EXISTS User (
+  id CHAR(36) PRIMARY KEY,
+  identifier VARCHAR(255) UNIQUE NOT NULL,
+  metadata JSON NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Thread (
+  id CHAR(36) PRIMARY KEY,
+  name VARCHAR(255) NULL,
+  userId CHAR(36) NULL,
+  userIdentifier VARCHAR(255) NULL,
+  tags JSON NULL,
+  metadata JSON NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Step (
+  id CHAR(36) PRIMARY KEY,
+  threadId CHAR(36) NOT NULL,
+  parentId CHAR(36) NULL,
+  name VARCHAR(255) NULL,
+  type VARCHAR(50) NOT NULL,
+  input MEDIUMTEXT NULL,
+  output MEDIUMTEXT NULL,
+  metadata JSON NULL,
+  tags JSON NULL,
+  createdAt DATETIME NOT NULL,
+  startTime DATETIME NULL,
+  endTime DATETIME NULL,
+  isError BOOLEAN DEFAULT FALSE,
+  generation JSON NULL,
+  feedback JSON NULL,
+  INDEX (threadId)
+);
+
+CREATE TABLE IF NOT EXISTS Element (
+  id CHAR(36) PRIMARY KEY,
+  threadId CHAR(36) NULL,
+  forId CHAR(36) NULL,
+  name VARCHAR(255) NULL,
+  type VARCHAR(50) NULL,
+  url TEXT NULL,
+  path TEXT NULL,
+  content MEDIUMTEXT NULL,
+  mime VARCHAR(100) NULL,
+  metadata JSON NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  INDEX (threadId)
+);
+
+CREATE TABLE IF NOT EXISTS Feedback (
+  id CHAR(36) PRIMARY KEY,
+  stepId CHAR(36) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  value FLOAT NOT NULL,
+  comment TEXT NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  INDEX (stepId)
+);
