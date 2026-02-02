@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 import os
 from langfuse import Langfuse
 
-# 1. Charger le .env
 load_dotenv()
 
 # 2. Vérifier les clés
@@ -24,7 +23,6 @@ if not public_key or not secret_key:
     print("      LANGFUSE_PUBLIC_KEY=pk-lf-...")
     print("      LANGFUSE_SECRET_KEY=sk-lf-...")
     print("      LANGFUSE_HOST=https://cloud.langfuse.com")
-    print("\n📖 Voir docs/GUIDE_LANGFUSE.md pour le guide complet")
     exit(1)
 
 # 3. Initialiser Langfuse
@@ -42,29 +40,21 @@ except Exception as e:
 # 4. Créer une trace de test
 try:
     print("\n🧪 Envoi d'une trace de test...")
-    
-    # API Langfuse 3.x : utiliser create_event (plus simple pour un test)
+
     event = langfuse.create_event(
         name="test-langfuse",
         metadata={"test": True, "source": "test_script"},
         input={"message": "hello langfuse"},
         output={"response": "langfuse fonctionne !"}
     )
-    
+
     print("✅ Événement envoyé avec succès")
     print(f"   Event ID: {event.id}")
     print(f"   🌐 Dashboard: {host}")
-    
-    # Forcer l'envoi immédiat
+
     langfuse.flush()
-    
     print("\n🎉 Test Langfuse réussi !")
-    print("   ➜ Allez sur https://cloud.langfuse.com")
-    print("   ➜ Sélectionnez votre projet")
-    print("   ➜ Onglet 'Traces' pour voir l'événement 'test-langfuse'")
-    print("\n💡 Le code dans app/agent.py utilise une API plus complexe")
-    print("   avec start_generation() pour tracer les appels LLM complets")
-    
+
 except Exception as e:
     print(f"\n❌ ERREUR lors de la création de la trace : {e}")
     import traceback
