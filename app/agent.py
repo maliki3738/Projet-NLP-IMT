@@ -1,10 +1,18 @@
 # app/agent.py
 
 import os
+import sys
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
+from typing import Optional, List, Dict, Any
+
+# Ensure project root is on sys.path when launched via Chainlit
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from app.tools import search_imt, send_email
-from typing import Optional
 
 # Tentative d'import Langfuse (observabilité)
 LANGFUSE_AVAILABLE = False
@@ -49,6 +57,14 @@ logger = logging.getLogger(__name__)
 # Tentative d'import du SDK Gemini (optionnelle)
 GENAI_AVAILABLE = False
 API_KEY = None
+import chainlit as cl
+
+@cl.on_chat_start
+async def _minimum_start():
+    await cl.Message(
+        content="✅ Agent démarré correctement"
+    ).send()
+
 try:
     import requests
     API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -489,9 +505,9 @@ def agent(question: str, history: list = None, memory_manager=None, session_id: 
     # 3. Enrichir les questions courtes avec le contexte de la conversation
     enriched_question = question
     if memory_manager and session_id and len(question.split()) <= 3:
-        recent_history = memory_manager.get_history(session_id, limit=2)
-        if recent_history:
-            last_context = ' '.join([msg['content'] for msg in recent_history[-2:] if msg['role'] == 'user'])
+        recent_history = _get_recent_history(memory_manager, session_id, limit=2)
+        last_context = _extract_user_context(recent_history)
+        if last_context:
             enriched_question = f"{last_context}. {question}"
             logger.info(f"Question enrichie: {enriched_question}")
     
@@ -562,6 +578,30 @@ def _deduplicate_lines(text: str) -> str:
             prev = stripped
     return '\n'.join(result)
 
+def _get_recent_history(memory_manager, session_id: str, limit: int = 2) -> List[Any]:
+    """Safely fetch recent history with compatibility across memory backends."""
+    try:
+        return memory_manager.get_history(session_id, limit=limit)
+    except TypeError:
+        history = memory_manager.get_history(session_id)
+        return history[-limit:] if history else []
+    except Exception:
+        return []
+
+def _extract_user_context(history: List[Any]) -> str:
+    """Extract the last user messages from a history list (dicts or 'role: msg' strings)."""
+    if not history:
+        return ""
+    user_msgs: List[str] = []
+    for msg in history[-2:]:
+        if isinstance(msg, dict):
+            if msg.get("role") == "user":
+                user_msgs.append((msg.get("content") or "").strip())
+        elif isinstance(msg, str):
+            if msg.lower().startswith("user:"):
+                user_msgs.append(msg.split(":", 1)[1].strip())
+    return " ".join([m for m in user_msgs if m])
+
 def reformulate_answer(question: str, context: str) -> str:
     """Reformule la réponse en utilisant Grok/Gemini avec des instructions claires."""
     global _all_llms_failed
@@ -609,6 +649,45 @@ RÉPONSE :"""
         result = '\n\n'.join(lines[:3])
         return f"📚 D'après nos documents :\n\n{result}\n\n💡 Pour plus d'informations, contactez l'administration de l'IMT Dakar."
     return f"📚 Voici ce que j'ai trouvé :\n\n{context[:500]}\n\n💡 Pour plus d'informations, contactez l'administration."
+
+try:
+    import chainlit as cl
+    import uuid
+    from memory.redis_memory import RedisMemory
+    from app.mysql_data_layer import MySQLDataLayer
+
+    _memory = RedisMemory()
+
+    # ❌ Désactiver MySQL temporairement (réactiver plus tard si besoin)
+    @cl.data_layer
+    def get_data_layer():
+        return MySQLDataLayer.from_env()
+
+    @cl.on_chat_start
+    async def _on_chat_start():
+        session_id = str(uuid.uuid4())
+        _memory.create_session(session_id)
+        cl.user_session.set("session_id", session_id)
+        await cl.Message(
+            content="Bonjour ! Je suis l'assistant de l'Institut Mines-Telecom Dakar. Comment puis-je vous aider ?"
+        ).send()
+
+    @cl.on_message
+    async def _on_message(message: cl.Message):
+        user_message = message.content.strip()
+        session_id = cl.user_session.get("session_id")
+        if not session_id:
+            session_id = str(uuid.uuid4())
+            _memory.create_session(session_id)
+            cl.user_session.set("session_id", session_id)
+
+        _memory.add_message(session_id, "user", user_message)
+        response = agent(user_message, memory_manager=_memory, session_id=session_id)
+        _memory.add_message(session_id, "assistant", response)
+        await cl.Message(content=response).send()
+
+except Exception as e:
+    logger.info(f"Chainlit non disponible ou erreur d'initialisation : {e}")
 
 if __name__ == "__main__":
     print("Agent IMT prêt\n")
