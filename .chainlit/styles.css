@@ -54,8 +54,25 @@ html, body, #root {
 body {
   font-family: var(--font-sans);
   color: hsl(var(--foreground));
-  background: radial-gradient(1200px 800px at 10% -10%, rgba(10, 132, 255, 0.18), transparent 60%);
+  background:
+    radial-gradient(1200px 800px at 10% -10%, rgba(10, 132, 255, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 10%, rgba(0, 255, 209, 0.1), transparent 55%);
   overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 400px at 15% 20%, rgba(0, 210, 255, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 85% 30%, rgba(20, 184, 166, 0.14), transparent 60%),
+    radial-gradient(500px 380px at 60% 85%, rgba(59, 130, 246, 0.12), transparent 60%);
+  filter: blur(10px) saturate(1.2);
+  opacity: 0.7;
+  animation: aurora-shift 16s ease-in-out infinite;
 }
 
 #root {
@@ -213,6 +230,7 @@ button[type="submit"] {
   border: 1px solid rgba(0, 210, 255, 0.35);
   box-shadow: 0 8px 22px rgba(0, 130, 255, 0.25);
   transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  background-size: 140% 140%;
 }
 
 button:hover,
@@ -230,6 +248,8 @@ pre, code {
 .cl-message,
 [data-message] {
   border-radius: 16px;
+  backdrop-filter: blur(10px);
+  animation: message-pop 0.28s ease;
 }
 
 .message.assistant,
@@ -296,6 +316,17 @@ img[alt*="avatar" i] {
   0% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(1.03); }
   100% { opacity: 0.4; transform: scale(1); }
+}
+
+@keyframes aurora-shift {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.65; }
+  50% { transform: translate3d(-2%, 1%, 0) scale(1.03); opacity: 0.8; }
+  100% { transform: translate3d(1%, -1%, 0) scale(1); opacity: 0.65; }
+}
+
+@keyframes message-pop {
+  0% { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

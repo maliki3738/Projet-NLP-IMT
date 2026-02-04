@@ -654,14 +654,22 @@ try:
     import chainlit as cl
     import uuid
     from memory.redis_memory import RedisMemory
-    from app.mysql_data_layer import MySQLDataLayer
 
     _memory = RedisMemory()
 
-    # ❌ Désactiver MySQL temporairement (réactiver plus tard si besoin)
+    # Tentative d'utiliser MySQL si configuré, sinon fallback sur la couche de données par défaut (mémoire)
     @cl.data_layer
     def get_data_layer():
-        return MySQLDataLayer.from_env()
+        try:
+            from app.mysql_data_layer import MySQLDataLayer
+            try:
+                return MySQLDataLayer.from_env()
+            except Exception as e:
+                logger.warning(f"MySQL DataLayer non disponible, utilisation de la mémoire par défaut : {e}")
+                return None
+        except Exception:
+            logger.debug("MySQLDataLayer non importable — utilisation de la mémoire par défaut")
+            return None
 
     @cl.on_chat_start
     async def _on_chat_start():
