@@ -65,13 +65,20 @@ gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if gemini_key:
     print(f"   ✅ Clé configurée : {gemini_key[:15]}...")
     try:
-        from google import genai
-        client = genai.Client(api_key=gemini_key)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-exp",
-            contents="test"
-        )
-        print("   ✅ QUOTA OK : Gemini répond normalement")
+        import requests
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+        payload = {
+            "contents": [{"parts": [{"text": "test"}]}],
+            "generationConfig": {"maxOutputTokens": 5}
+        }
+        response = requests.post(url, json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            print("   ✅ QUOTA OK : Gemini répond normalement")
+        elif response.status_code == 429:
+            print("   ❌ QUOTA ÉPUISÉ (Free Tier)")
+        else:
+            raise Exception(f"HTTP {response.status_code}: {response.text}")
     except Exception as e:
         error_str = str(e)
         if "429" in error_str and "RESOURCE_EXHAUSTED" in error_str:

@@ -5,6 +5,7 @@ import re
 import uuid
 from dotenv import load_dotenv
 from app.tools import search_imt, send_email
+from app.agent import reformulate_answer  # Import de la fonction Gemini
 from memory.redis_memory import RedisMemory
 from app.mysql_data_layer import MySQLDataLayer
 
@@ -90,8 +91,13 @@ async def main(message: cl.Message):
         # Rechercher le contexte
         context = search_imt(user_message)
         
-        # Formater une réponse simple et claire
-        response = format_response(user_message, context)
+        # Utiliser Gemini pour générer une réponse intelligente
+        logger.info("🤖 Utilisation de Gemini 2.5 Flash pour la réponse...")
+        response = reformulate_answer(user_message, context)
+        
+        # Fallback si Gemini échoue
+        if not response or response == context:
+            response = format_response(user_message, context)
     
     # Stocker la réponse
     messages.append({"role": "assistant", "content": response})

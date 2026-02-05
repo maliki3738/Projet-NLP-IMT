@@ -130,7 +130,7 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
         result = response.choices[0].message.content.strip()
         
         # Trace Langfuse 3.x avec usage tokens + coûts Grok
-        if LANGFUSE_AVAILABLE:
+        if LANGFUSE_AVAILABLE and False:  # Désactivé temporairement
             try:
                 # Grok pricing : $5/1M input tokens, $15/1M output tokens
                 usage = response.usage
@@ -138,19 +138,20 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
                 output_tokens = usage.completion_tokens if usage else 0
                 cost = (input_tokens / 1_000_000 * 5.0) + (output_tokens / 1_000_000 * 15.0)
                 
-                langfuse_client.create_event(
+                trace = langfuse_client.trace(name="grok_generation")
+                trace.generation(
                     name="grok_call",
+                    model="grok-beta",
+                    input=prompt,
+                    output=result,
+                    usage={
+                        "input": input_tokens,
+                        "output": output_tokens,
+                        "total": input_tokens + output_tokens
+                    },
                     metadata={
-                        "model": "grok-beta",
                         "max_tokens": max_tokens,
                         "cost_usd": round(cost, 6)
-                    },
-                    input={"prompt": prompt},
-                    output={"response": result},
-                    usage={
-                        "prompt_tokens": input_tokens,
-                        "completion_tokens": output_tokens,
-                        "total_tokens": input_tokens + output_tokens
                     }
                 )
             except Exception as trace_error:
@@ -160,12 +161,13 @@ def _call_grok(prompt: str, max_tokens: int = 150) -> Optional[str]:
     except Exception as e:
         logger.error(f"Erreur Grok : {e}")
         # Trace error in Langfuse
-        if LANGFUSE_AVAILABLE:
+        if LANGFUSE_AVAILABLE and False:  # Désactivé temporairement
             try:
-                langfuse_client.create_event(
+                trace = langfuse_client.trace(name="grok_error")
+                trace.event(
                     name="grok_call_error",
                     metadata={"model": "grok-beta", "error": str(e)},
-                    input={"prompt": prompt}
+                    input=prompt
                 )
             except:
                 pass
@@ -194,7 +196,7 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
         result = response.choices[0].message.content.strip()
         
         # Trace Langfuse 3.x avec usage tokens + coûts OpenAI
-        if LANGFUSE_AVAILABLE:
+        if LANGFUSE_AVAILABLE and False:  # Désactivé temporairement
             try:
                 # OpenAI GPT-4o-mini pricing : $0.15/1M input, $0.60/1M output
                 usage = response.usage
@@ -202,19 +204,20 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
                 output_tokens = usage.completion_tokens if usage else 0
                 cost = (input_tokens / 1_000_000 * 0.15) + (output_tokens / 1_000_000 * 0.60)
                 
-                langfuse_client.create_event(
+                trace = langfuse_client.trace(name="openai_generation")
+                trace.generation(
                     name="openai_call",
+                    model="gpt-4o-mini",
+                    input=prompt,
+                    output=result,
+                    usage={
+                        "input": input_tokens,
+                        "output": output_tokens,
+                        "total": input_tokens + output_tokens
+                    },
                     metadata={
-                        "model": "gpt-4o-mini",
                         "max_tokens": max_tokens,
                         "cost_usd": round(cost, 6)
-                    },
-                    input={"prompt": prompt},
-                    output={"response": result},
-                    usage={
-                        "prompt_tokens": input_tokens,
-                        "completion_tokens": output_tokens,
-                        "total_tokens": input_tokens + output_tokens
                     }
                 )
             except Exception as trace_error:
@@ -224,12 +227,13 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
     except Exception as e:
         logger.error(f"Erreur OpenAI : {e}")
         # Trace error in Langfuse
-        if LANGFUSE_AVAILABLE:
+        if LANGFUSE_AVAILABLE and False:  # Désactivé temporairement
             try:
-                langfuse_client.create_event(
+                trace = langfuse_client.trace(name="openai_error")
+                trace.event(
                     name="openai_call_error",
                     metadata={"model": "gpt-4o-mini", "error": str(e)},
-                    input={"prompt": prompt}
+                    input=prompt
                 )
             except:
                 pass
@@ -243,7 +247,7 @@ def _call_gemini(prompt: str) -> Optional[str]:
     Gemini en priorité car :
     - Free tier : 15 req/min, 1500 req/jour
     - Gratuit (0$) avec tracking tokens dans Langfuse
-    - Modèle performant : gemini-2.0-flash-exp
+    - Modèle performant : gemini-2.5-flash
     
     Instructions pour l'IA:
     Tu es l'expert de l'IMT Dakar. Utilise les documents fournis pour répondre. 
@@ -299,7 +303,7 @@ def _call_gemini_direct(prompt: str) -> Optional[str]:
         import requests
         import json
         
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
         
         payload = {
             "contents": [{
@@ -307,7 +311,7 @@ def _call_gemini_direct(prompt: str) -> Optional[str]:
             }],
             "generationConfig": {
                 "temperature": 0.3,
-                "maxOutputTokens": 300,
+                "maxOutputTokens": 1024,
             }
         }
         
@@ -328,30 +332,32 @@ def _call_gemini_direct(prompt: str) -> Optional[str]:
         result = data['candidates'][0]['content']['parts'][0]['text'].strip()
         logger.debug(f"Réponse Gemini: {result[:100]}...")
         
-        # Track dans Langfuse avec usage tokens
+        # Track dans Langfuse 3.7+ (méthode simple avec create_event)
         if LANGFUSE_AVAILABLE:
             try:
                 usage = data.get('usageMetadata', {})
-                usage_dict = {
-                    "prompt_tokens": usage.get('promptTokenCount', 0),
-                    "completion_tokens": usage.get('candidatesTokenCount', 0),
-                    "total_tokens": usage.get('totalTokenCount', 0)
-                }
+                input_tokens = usage.get('promptTokenCount', 0)
+                output_tokens = usage.get('candidatesTokenCount', 0)
                 
+                logger.info(f"📊 Tokens: {input_tokens} input, {output_tokens} output")
+                
+                # Créer un événement simple
                 langfuse_client.create_event(
-                    name="gemini_call",
+                    name="gemini_response",
                     metadata={
-                        "model": "gemini-2.0-flash",
+                        "model": "gemini-2.5-flash",
                         "temperature": 0.3,
-                        "max_tokens": 300,
-                        "cost": 0.0  # Free tier
+                        "max_tokens": 1024,
+                        "cost_usd": 0.0,  # Free tier
+                        "tokens_input": input_tokens,
+                        "tokens_output": output_tokens,
+                        "tokens_total": usage.get('totalTokenCount', input_tokens + output_tokens)
                     },
-                    input={"prompt": prompt},
-                    output={"response": result},
-                    usage=usage_dict
+                    input=prompt[:500],
+                    output=result[:500]
                 )
             except Exception as trace_error:
-                logger.warning(f"Langfuse trace failed: {trace_error}")
+                logger.debug(f"Langfuse trace skipped: {trace_error}")
         
         return result
     except Exception as e:
@@ -359,10 +365,10 @@ def _call_gemini_direct(prompt: str) -> Optional[str]:
         logger.error(f"Erreur lors de l'appel Gemini : {error_msg[:200]}")
         if LANGFUSE_AVAILABLE:
             try:
-                langfuse_client.create_event(
+                langfuse_client.event(
                     name="gemini_call_error",
-                    metadata={"model": "gemini-2.0-flash", "error": error_msg[:500]},
-                    input={"prompt": prompt[:200]}
+                    metadata={"model": "gemini-2.5-flash", "error": error_msg[:500]},
+                    input=prompt[:200]
                 )
             except:
                 pass

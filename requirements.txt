@@ -18,7 +18,7 @@ openai>=1.0.0
 
 # RAG vectoriel - FAISS
 sentence-transformers>=5.0.0
-faiss-cpu>=1.12.0
+# faiss-cpu>=1.12.0
 
 # Observabilité - Langfuse
 langfuse>=3.0.0
