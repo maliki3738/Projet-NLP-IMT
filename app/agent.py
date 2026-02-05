@@ -57,13 +57,6 @@ logger = logging.getLogger(__name__)
 # Tentative d'import du SDK Gemini (optionnelle)
 GENAI_AVAILABLE = False
 API_KEY = None
-import chainlit as cl
-
-@cl.on_chat_start
-async def _minimum_start():
-    await cl.Message(
-        content="✅ Agent démarré correctement"
-    ).send()
 
 try:
     import requests
@@ -650,52 +643,39 @@ RÉPONSE :"""
         return f"📚 D'après nos documents :\n\n{result}\n\n💡 Pour plus d'informations, contactez l'administration de l'IMT Dakar."
     return f"📚 Voici ce que j'ai trouvé :\n\n{context[:500]}\n\n💡 Pour plus d'informations, contactez l'administration."
 
-try:
-    import chainlit as cl
-    import uuid
-    from memory.redis_memory import RedisMemory
+import chainlit as cl
+import uuid
+from memory.redis_memory import RedisMemory
+from app.mysql_data_layer import MySQLDataLayer
 
-    _memory = RedisMemory()
+_memory = RedisMemory()
 
-    # Tentative d'utiliser MySQL si configuré, sinon fallback sur la couche de données par défaut (mémoire)
-    @cl.data_layer
-    def get_data_layer():
-        try:
-            from app.mysql_data_layer import MySQLDataLayer
-            try:
-                return MySQLDataLayer.from_env()
-            except Exception as e:
-                logger.warning(f"MySQL DataLayer non disponible, utilisation de la mémoire par défaut : {e}")
-                return None
-        except Exception:
-            logger.debug("MySQLDataLayer non importable — utilisation de la mémoire par défaut")
-            return None
+@cl.data_layer
+def get_data_layer():
+    return MySQLDataLayer.from_env()
 
-    @cl.on_chat_start
-    async def _on_chat_start():
+@cl.on_chat_start
+async def _on_chat_start():
+    session_id = str(uuid.uuid4())
+    _memory.create_session(session_id)
+    cl.user_session.set("session_id", session_id)
+    await cl.Message(
+        content="Bonjour ! Je suis l'assistant de l'Institut Mines-Telecom Dakar. Comment puis-je vous aider ?"
+    ).send()
+
+@cl.on_message
+async def _on_message(message: cl.Message):
+    user_message = message.content.strip()
+    session_id = cl.user_session.get("session_id")
+    if not session_id:
         session_id = str(uuid.uuid4())
         _memory.create_session(session_id)
         cl.user_session.set("session_id", session_id)
-        await cl.Message(
-            content="Bonjour ! Je suis l'assistant de l'Institut Mines-Telecom Dakar. Comment puis-je vous aider ?"
-        ).send()
 
-    @cl.on_message
-    async def _on_message(message: cl.Message):
-        user_message = message.content.strip()
-        session_id = cl.user_session.get("session_id")
-        if not session_id:
-            session_id = str(uuid.uuid4())
-            _memory.create_session(session_id)
-            cl.user_session.set("session_id", session_id)
-
-        _memory.add_message(session_id, "user", user_message)
-        response = agent(user_message, memory_manager=_memory, session_id=session_id)
-        _memory.add_message(session_id, "assistant", response)
-        await cl.Message(content=response).send()
-
-except Exception as e:
-    logger.info(f"Chainlit non disponible ou erreur d'initialisation : {e}")
+    _memory.add_message(session_id, "user", user_message)
+    response = agent(user_message, memory_manager=_memory, session_id=session_id)
+    _memory.add_message(session_id, "assistant", response)
+    await cl.Message(content=response).send()
 
 if __name__ == "__main__":
     print("Agent IMT prêt\n")
