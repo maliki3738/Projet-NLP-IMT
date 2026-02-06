@@ -1,95 +1,100 @@
-📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp
+🎓 Parcours de formation à l'IMT Dakar
 
-📞 Téléphone : 177035454, 174246449, 174246448, 18.048 18.24, 177032955, 088985906
+📌 Accès : Bac Scientifique
 
-Bachelor Sciences et Ingénierie du Numérique : IoT, cyber & cloud
+🧱 ANNÉE 1 : Tronc commun
+Une première année commune à tous les étudiants, servant de base scientifique et technique avant la spécialisation.
 
-Devenez acteurs de la transition numérique !
+🔀 ANNÉE 2 : Choix de filière
+À l'issue du tronc commun, deux grandes filières sont proposées :
+1. Filière Numérique
+2. Filière Énergie et Génie civil
 
-Ce bachelor en 3 ans s’adresse aux bacheliers de série Scientifique et vise à répondre aux besoins des entreprises en ingénierie numérique, en particulier dans les domaines des réseaux,  des services cloud, de l’Internet des Objets et de leur sécurisation, à un niveau cadre intermédiaire, pour accompagner la transformation numérique dans un contexte de transition écologique.
+🎓 ANNÉE 3 : Bachelor Sciences et Ingénierie (spécialisations)
 
-Un cursus innovant par apprentissage
+═══════════════════════════════════════════
+🔹 FILIÈRE NUMÉRIQUE
+Bachelor Sciences et Ingénierie – Numérique
+═══════════════════════════════════════════
 
-Le programme se compose de 6 semestres incluant  :
+Spécialités proposées :
+• IoT (Internet des Objets)
+• Cybersécurité
+• Cloud Computing
 
-un stage de 2 mois en 2ème année
+Programme :
+- Ce bachelor en 3 ans s'adresse aux bacheliers de série Scientifique
+- Stage de 2 mois en 2ème année
+- 3ème année en apprentissage
+- Formation axée sur les réseaux, services cloud, Internet des Objets et leur sécurisation
 
-une 3ème année en apprentissage
+Débouchés professionnels :
+• Développeur d'applications web et mobile
+• Technicien / Architecte réseau
+• Technicien cloud ou support IT
+• Assistant chef de projet numérique
+• Assistant chef de projet en cybersécurité
+• Analyste cybersécurité
+• Concepteur et intégrateur d'objets connectés
+• Technicien base de données
+• Assistant product manager IA
+• Technicien robotique
+• Gestionnaire de parc informatique
+• Conseiller support technique
+• Chargé de projet digital
+• Gestionnaire de site web
 
-La recherche de stage et de l’entreprise d’accueil en apprentissage est facilitée grâce au réseau de partenaires de l’Institut Mines-Télécom au Sénégal.
+═══════════════════════════════════════════
+🔹 FILIÈRE ÉNERGIE
+Bachelor Sciences et Ingénierie – Option Transition énergétique
+═══════════════════════════════════════════
 
-» La 3ème année d’études est proposée en alternance pour permettre aux étudiants d’acquérir une première expérience et faciliter ainsi leur insertion professionnelle «
+Objectifs :
+Formation axée sur les énergies renouvelables et la transition énergétique pour accompagner le développement durable.
 
-Département Systèmes, réseaux, cybersécurité et droit du numérique à IMT Atlantique
+Débouchés professionnels :
+• Technicien en énergies renouvelables
+• Analyste en performance énergétique
+• Assistant chef de projet en transition énergétique
+• Conseiller en efficacité énergétique
+• Technicien maintenance systèmes énergétiques
 
-De nombreux débouchés
+═══════════════════════════════════════════
+🔹 FILIÈRE GÉNIE CIVIL
+Bachelor Sciences et Ingénierie – Option Génie civil et construction durable
+═══════════════════════════════════════════
 
-Le programme permet une intégration rapide au monde professionnel dans les métiers suivants :
+Objectifs :
+Formation dédiée à la construction durable et aux infrastructures respectueuses de l'environnement.
 
-Développeur d’applications web et mobile
+Débouchés professionnels :
+• Assistant en ingénierie de la construction durable
+• Technicien en diagnostic des bâtiments
+• Contrôleur technique dans la construction
+• Conseiller en éco-construction
+• Technicien BIM (Building Information Modeling)
+• Assistant conducteur de travaux
 
-Technicien / Architecte réseau
+💼 INSERTION PROFESSIONNELLE
+Les formations mènent directement au marché du travail selon la spécialité choisie.
 
-Assistant chef de projet en cybersécurité
+📚 POURSUITE D'ÉTUDES
+Possibilité de poursuivre les études :
+• Dans une école de l'IMT en France (statut étudiant ou apprentissage)
+• Dans une école d'ingénieurs partenaire
+• Dans une école de commerce
 
-Concepteur et intégrateur d’objets connectés
+🔁 MODALITÉ PARTICULIÈRE : ALTERNANCE
+La 3ème année est proposée en alternance pour :
+• Permettre aux étudiants d'acquérir une première expérience professionnelle
+• Faciliter leur insertion sur le marché du travail
+• Bénéficier du réseau de partenaires de l'IMT au Sénégal
 
-Technicien base de données
+🌍 CONTEXTE ET ENJEUX
+Ces programmes répondent aux besoins croissants en compétences dans les secteurs clés :
+• Transformation numérique
+• Transition énergétique
+• Construction durable
+• Développement socio-économique du Sénégal et de l'Afrique
 
-Assistant product manager IA
-
-Technicien robotique
-
-Technicien système et réseau
-
-Technicien cloud
-
-Assistant chef de projet / technicien cybersécurité
-
-Gestionnaire de parc informatique
-
-Conseiller support technique
-
-Chargé de projet digital
-
-Gestionnaire de site web
-
-La poursuite d’études est également possible dans une école de commerce ou d’ingénieurs, notamment dans les écoles de l’IMT en France ouvertes à l’apprentissage.
-
-Autres sites IMT
-
-Fondation Mines-Télécom
-
-Institut Carnot Télécom & Société numérique
-
-Institut Carnot M.I.N.E.S
-
-Écoles de l’IMT
-
-Filiales, écoles associées ou sous convention
-
-Labels et partenaires
-
-Faire défiler vers le haut
-
-Ce site utilise des cookies. Vous avez la possibilité d'accepter ou de refuser leur utilisation.
-
-Cliquez sur les différentes rubriques de la catégorie pour en savoir plus. Vous pouvez également modifier certaines de vos préférences. Notez que le blocage de certains types de cookies peut avoir une incidence sur votre expérience sur nos sites Web et les services que nous sommes en mesure d’offrir.
-
-Ces cookies sont strictement nécessaires pour vous délivrer les services disponibles sur notre site et pour utiliser certaines de ses fonctionnalités.
-
-Nous vous fournissons une liste de cookies déposés sur votre ordinateur via notre domaine, vous pouvez ainsi voir ce qui y est stocké. Pour des raisons de sécurité nous ne pouvons montrer ou afficher les cookies externes d’autres domaines. Ceux-ci sont accessibles via les options de votre navigateur.
-
-Cochez pour activer le masquage permanent de la barre d’acceptation / refus des cookies si vous ne les acceptez pas. 2 cookies seront nécessaires pour mémoriser ce choix. Sans quoi le message apparaitrait à nouveau à chaque page ou fenêtre.
-
-Ces cookies collectent des informations de manière compilée pour nous aider à comprendre comment notre site est utilisé et combien son performantes nos actions marketing, ou pour nous aider à personnaliser notre site afin d’améliorer votre expérience de navigation.
-
-Cliquer pour activer/désactiver les polices Google Fonts.
-
-Réglages Google Map :
-
-Cliquez pour activer/désactiver l’incorporation de vidéos.
-
-Les cookies suivants sont également requis - Vous pouvez choisir d’autoriser leur utilisation :
-
-Ouvrir la barre de message
+Ils proposent un solide socle scientifique permettant une insertion professionnelle rapide ou une poursuite d'études.
