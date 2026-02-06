@@ -16,11 +16,12 @@ Posez-moi vos questions en français ou en anglais. Par exemple :
 - "Comment contacter le directeur ?"
 - "Quelles formations proposez-vous ?"
 
-L'agent garde en mémoire notre conversation pour un échange plus naturel !
+## 📊 Sessions actives
+- **Limite** : 3 discussions simultanées max
+- **Durée de vie** : 1 heure (TTL)
+- **Mémoire** : Votre historique est conservé pendant 60 minutes
 
-<!-- Chargement du sidebar des sessions -->
-<link rel="stylesheet" href="/public/sessions-sidebar.css">
-<script src="/public/sessions-sidebar.js"></script>
+*L'agent garde en mémoire notre conversation pour un échange plus naturel !*
 
 ---
 
