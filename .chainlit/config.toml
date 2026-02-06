@@ -10,7 +10,7 @@ allow_origins = ["*"]
 
 [features]
 prompt_playground = false
-unsafe_allow_html = false
+unsafe_allow_html = true
 latex = false
 user_message_autoscroll = true
 assistant_message_autoscroll = true

@@ -56,55 +56,19 @@ async def start():
 
     logger.info(f"🆕 Nouvelle session créée: {session_id}")
 
-    # Afficher les sessions actives dans le sidebar
-    await display_active_sessions(session_id)
-
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
     ).send()
 
-async def display_active_sessions(current_session_id: str):
-    """Affiche les sessions actives (max 3) dans le sidebar.
-    
-    La session actuelle n'est pas affichée (elle est déjà ouverte).
-    Donc on affiche les 2 autres sessions max.
-    """
-    try:
-        sessions = memory.list_sessions()
-        
-        # Filtrer la session actuelle
-        other_sessions = [s for s in sessions if s.get("session_id") != current_session_id]
-        
-        if not other_sessions:
-            # Aucune autre session, pas de sidebar
-            return
-        
-        # Construire le contenu du sidebar
-        sidebar_content = "## 💬 Discussions récentes\n\n"
-        sidebar_content += f"*Vous avez {len(other_sessions)} autre(s) discussion(s) active(s)*\n\n"
-        
-        for i, sess in enumerate(other_sessions[:2], 1):  # Max 2 autres sessions
-            sess_id = sess.get("session_id", "N/A")[:8]  # Afficher les 8 premiers caractères
-            msg_count = sess.get("message_count", 0)
-            ttl = sess.get("ttl_remaining", 0)
-            ttl_min = ttl // 60
-            
-            sidebar_content += f"**Session {i}** (`{sess_id}...`)\n"
-            sidebar_content += f"- 💬 {msg_count} message(s)\n"
-            sidebar_content += f"- ⏱️ Expire dans {ttl_min} min\n\n"
-        
-        sidebar_content += "---\n\n"
-        sidebar_content += f"**Session actuelle:** `{current_session_id[:8]}...`\n"
-        sidebar_content += f"**Limite:** {memory.MAX_SESSIONS} sessions max | TTL: {memory.SESSION_TTL//60}min"
-        
-        # Envoyer dans le sidebar (via cl.Message avec author="System")
-        await cl.Message(
-            content=sidebar_content,
-            author="📊 Statistiques"
-        ).send()
-        
-    except Exception as e:
-        logger.warning(f"Impossible d'afficher les sessions: {e}")
+@cl.on_settings_update
+async def setup_agent(settings):
+    """Gère les mises à jour de settings (utilisé pour le sidebar)."""
+    pass
+
+@cl.on_chat_resume
+async def on_chat_resume():
+    """Appelé quand une session est restaurée."""
+    pass
 
 @cl.on_message
 async def main(message: cl.Message):

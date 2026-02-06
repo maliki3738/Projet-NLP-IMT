@@ -18,6 +18,10 @@ Posez-moi vos questions en français ou en anglais. Par exemple :
 
 L'agent garde en mémoire notre conversation pour un échange plus naturel !
 
+<!-- Chargement du sidebar des sessions -->
+<link rel="stylesheet" href="/public/sessions-sidebar.css">
+<script src="/public/sessions-sidebar.js"></script>
+
 ---
 
 *Développé avec Chainlit et IA générative*
