@@ -163,7 +163,7 @@ class MySQLDataLayer(BaseDataLayer):
                 "path": element.path,
                 "content": element.content,
                 "mime": element.mime,
-                "metadata": _json_dumps(element.metadata),
+                "metadata": _json_dumps(getattr(element, 'metadata', {})),
                 "createdAt": now,
                 "updatedAt": now,
             },

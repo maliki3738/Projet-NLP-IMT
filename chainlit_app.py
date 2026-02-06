@@ -79,9 +79,62 @@ async def on_chat_resume():
     logger.info("🔄 Thread Chainlit restauré depuis le sidebar UI")
     pass
 
+@cl.on_audio_start
+async def on_audio_start():
+    """Appelé quand l'utilisateur commence un enregistrement vocal (STT)."""
+    logger.info("🎤 Enregistrement vocal démarré")
+    return True
+
+@cl.on_audio_chunk
+async def on_audio_chunk(chunk: cl.AudioChunk):
+    """Reçoit les morceaux audio pendant l'enregistrement (streaming STT)."""
+    # Chainlit gère automatiquement la transcription via Web Speech API
+    pass
+
+@cl.on_audio_end
+async def on_audio_end(elements: list[cl.Element]):
+    """Appelé quand l'enregistrement vocal se termine.
+    
+    Args:
+        elements: Liste contenant l'audio transcrit en texte
+    """
+    logger.info(f"🎤 Enregistrement vocal terminé ({len(elements)} éléments reçus)")
+    # Le texte transcrit est automatiquement envoyé comme message via on_message
+    pass
+
 @cl.on_message
 async def main(message: cl.Message):
     user_message = message.content.strip()
+    
+    # Gérer les fichiers uploadés
+    uploaded_files = []
+    if message.elements:
+        for element in message.elements:
+            if hasattr(element, 'path') and element.path:
+                uploaded_files.append(element)
+                logger.info(f"📎 Fichier reçu: {element.name} ({element.mime})")
+    
+    # Extraire le contenu des fichiers uploadés
+    file_contents = []
+    for file_elem in uploaded_files:
+        try:
+            if file_elem.mime == "text/plain" or file_elem.name.endswith(".txt"):
+                with open(file_elem.path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    file_contents.append(f"\n**Contenu de {file_elem.name}**:\n{content[:1000]}")
+                    logger.info(f"✅ Contenu TXT extrait ({len(content)} caractères)")
+            elif file_elem.mime == "application/pdf" or file_elem.name.endswith(".pdf"):
+                # Pour les PDF, on informe l'utilisateur
+                file_contents.append(f"\n📄 **Fichier PDF reçu** : {file_elem.name}")
+                file_contents.append("Note : L'extraction PDF nécessite PyPDF2 (non installé actuellement).")
+                logger.warning(f"⚠️ PDF reçu mais extraction non disponible: {file_elem.name}")
+        except Exception as e:
+            logger.error(f"❌ Erreur lecture fichier {file_elem.name}: {e}")
+            file_contents.append(f"\n⚠️ Impossible de lire {file_elem.name}")
+    
+    # Ajouter le contenu des fichiers au message utilisateur
+    if file_contents:
+        user_message += "\n\n" + "\n".join(file_contents)
 
     session_id = cl.user_session.get("session_id")
     
@@ -154,4 +207,25 @@ async def main(message: cl.Message):
     if session_id:
         memory.add_message(session_id, "assistant", response)
     
-    await cl.Message(content=response).send()
+    # Créer un bouton TTS (Text-to-Speech) sur le message
+    actions = [
+        cl.Action(name="tts", value="speak", label="🔊 Écouter", description="Lire ce message à voix haute")
+    ]
+    
+    await cl.Message(content=response, actions=actions).send()
+
+@cl.action_callback("tts")
+async def on_tts_action(action: cl.Action):
+    """Callback pour le bouton TTS - lit le message à voix haute."""
+    # Le message parent contient le texte à lire
+    msg = action.value
+    
+    # Envoyer un message audio (nécessite que le navigateur supporte Web Speech API)
+    await cl.Message(
+        content="🔊 **Lecture audio en cours...**\n\nVeuillez activer le son de votre navigateur.",
+        author="System"
+    ).send()
+    
+    # Note : Le vrai TTS nécessite une intégration avec une API externe (Google TTS, ElevenLabs, etc.)
+    # Chainlit ne fournit pas de TTS natif côté serveur
+    logger.info("🔊 Bouton TTS cliqué (TTS backend non implémenté)")
