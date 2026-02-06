@@ -55,6 +55,11 @@ async def start():
     cl.user_session.set("session_id", session_id)
     cl.user_session.set("messages", [])
 
+    if not os.getenv("DATABASE_URL"):
+        await cl.Message(
+            content="ATTENTION: DATABASE_URL manquant. La persistance de l'historique est desactivee."
+        ).send()
+
     logger.info(f"🆕 Nouvelle session créée: {session_id}")
     
     # Note : Chainlit gère son propre système de threads/sidebar

@@ -260,6 +260,52 @@
     document.body.classList.toggle('imt-typing', isTyping);
   }
 
+  function findSidebar() {
+    return document.querySelector('[data-testid*="sidebar" i], aside, nav, .sidebar, [class*="sidebar" i]');
+  }
+
+  function findHistoryAnchor(sidebar) {
+    if (!sidebar) return null;
+    return (
+      sidebar.querySelector('[data-testid*="thread-history" i]') ||
+      sidebar.querySelector('[data-testid*="history" i]') ||
+      sidebar.querySelector('ul')
+    );
+  }
+
+  function ensureHistoryPlaceholder() {
+    const sidebar = findSidebar();
+    if (!sidebar) return false;
+
+    let placeholder = document.getElementById('imt-history-placeholder');
+    if (!placeholder) {
+      placeholder = document.createElement('div');
+      placeholder.id = 'imt-history-placeholder';
+      placeholder.className = 'imt-history-placeholder';
+      placeholder.innerHTML = `
+        <div class="imt-history-placeholder__title">Historique des conversations</div>
+        <div class="imt-history-placeholder__body">
+          Les discussions recentes s'affichent ici.
+        </div>
+      `;
+      const header = sidebar.querySelector('header');
+      const target = findHistoryAnchor(sidebar);
+      if (header && header.parentElement === sidebar) {
+        header.insertAdjacentElement('afterend', placeholder);
+      } else if (target && target.parentElement) {
+        target.parentElement.insertBefore(placeholder, target);
+      } else {
+        sidebar.prepend(placeholder);
+      }
+    }
+
+    const hasItems = Boolean(
+      sidebar.querySelector('[data-testid*="history" i] li, [data-testid*="sidebar" i] li')
+    );
+    placeholder.style.display = hasItems ? 'none' : 'block';
+    return true;
+  }
+
   const observer = new MutationObserver((mutations) => {
     let sawMessage = false;
     let typing = false;
@@ -279,6 +325,7 @@
     }
     if (sawMessage) pulseOnMessage();
     if (typing) setTypingState(true);
+    ensureHistoryPlaceholder();
   });
 
   const typingWatcher = setInterval(() => {
@@ -326,4 +373,13 @@
   render();
   animateHalo();
   startObserver();
+  ensureHistoryPlaceholder();
+
+  let placeholderAttempts = 0;
+  const placeholderBoot = setInterval(() => {
+    placeholderAttempts += 1;
+    if (ensureHistoryPlaceholder() || placeholderAttempts > 30) {
+      clearInterval(placeholderBoot);
+    }
+  }, 800);
 })();

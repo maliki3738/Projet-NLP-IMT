@@ -767,6 +767,10 @@ async def _on_chat_start():
     session_id = str(uuid.uuid4())
     _memory.create_session(session_id)
     cl.user_session.set("session_id", session_id)
+    if not os.getenv("DATABASE_URL"):
+        await cl.Message(
+            content="ATTENTION: DATABASE_URL manquant. La persistance de l'historique est desactivee."
+        ).send()
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Telecom Dakar. Comment puis-je vous aider ?"
     ).send()
