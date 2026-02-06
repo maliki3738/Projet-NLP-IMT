@@ -49,7 +49,7 @@ def format_response(question: str, context: str) -> str:
 
 @cl.on_chat_start
 async def start():
-    # Créer un ID unique pour la session Redis
+    # Créer un ID unique pour la session Redis (backend)
     session_id = str(uuid.uuid4())
     memory.create_session(session_id)
     cl.user_session.set("session_id", session_id)
@@ -57,10 +57,8 @@ async def start():
 
     logger.info(f"🆕 Nouvelle session créée: {session_id}")
     
-    # Le thread Chainlit est créé automatiquement par le data layer
-    # On récupère son ID via cl.context.session
-    thread_id = cl.context.session.id if cl.context.session else session_id
-    logger.info(f"📝 Thread Chainlit ID: {thread_id}")
+    # Note : Chainlit gère son propre système de threads/sidebar
+    # Notre système Redis (3 sessions, TTL 1h) est indépendant mais complémentaire
 
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
@@ -73,7 +71,12 @@ async def setup_agent(settings):
 
 @cl.on_chat_resume
 async def on_chat_resume():
-    """Appelé quand une session est restaurée."""
+    """Appelé quand Chainlit restaure un thread depuis le sidebar.
+    
+    Note : Chainlit gère automatiquement la restauration des messages via MySQL.
+    Notre système Redis est indépendant et ne nécessite pas d'intervention ici.
+    """
+    logger.info("🔄 Thread Chainlit restauré depuis le sidebar UI")
     pass
 
 @cl.on_message
@@ -81,6 +84,35 @@ async def main(message: cl.Message):
     user_message = message.content.strip()
 
     session_id = cl.user_session.get("session_id")
+    
+    # Commande pour afficher l'historique des sessions
+    if user_message.lower() in ["historique", "mes discussions", "sessions", "liste sessions"]:
+        sessions = memory.list_sessions()
+        current_session = cl.user_session.get("session_id")
+        
+        response = "## 📊 Sessions actives (Backend Redis)\n\n"
+        response += f"**Limite** : {memory.MAX_SESSIONS} sessions simultanées\n"
+        response += f"**TTL** : {memory.SESSION_TTL // 60} minutes\n\n"
+        
+        if not sessions:
+            response += "*Aucune session active pour le moment.*"
+        else:
+            for i, sess in enumerate(sessions, 1):
+                sess_id = sess.get("session_id", "N/A")
+                is_current = "✅ **Actuelle**" if sess_id == current_session else ""
+                msg_count = sess.get("message_count", 0)
+                ttl_min = sess.get("ttl_remaining", 0) // 60
+                
+                response += f"### Session {i} {is_current}\n"
+                response += f"- **ID** : `{sess_id[:12]}...`\n"
+                response += f"- **Messages** : {msg_count}\n"
+                response += f"- **Expire dans** : {ttl_min} min\n\n"
+        
+        response += "\n---\n\n"
+        response += "💡 **Note** : Chainlit UI gère également son propre historique dans le sidebar (si disponible)."
+        
+        await cl.Message(content=response).send()
+        return
     
     # Stocker le message dans la session Chainlit
     messages = cl.user_session.get("messages")
