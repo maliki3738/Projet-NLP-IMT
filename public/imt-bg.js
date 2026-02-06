@@ -293,37 +293,19 @@
     }
   }
 
+  // Animation audio désactivée pour éviter la demande d'autorisation micro
+  // Les fonctionnalités STT/TTS sont gérées nativement par Chainlit
   function setupAudio() {
     if (audioReady) return;
     audioReady = true;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        analyser.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i];
-        const avg = sum / data.length / 255;
-        audioTarget = 0.08 + avg * 0.6;
-        requestAnimationFrame(tick);
-      };
-      tick();
-    }).catch(() => {
-      // fallback idle pulse
-      let t = 0;
-      const idle = () => {
-        t += 0.03;
-        audioTarget = 0.12 + Math.sin(t) * 0.05;
-        requestAnimationFrame(idle);
-      };
-      idle();
-    });
+    // Fallback : animation par pulsation idle (pas de micro requis)
+    let t = 0;
+    const idle = () => {
+      t += 0.03;
+      audioTarget = 0.12 + Math.sin(t) * 0.05;
+      requestAnimationFrame(idle);
+    };
+    idle();
   }
 
   function onFirstGesture() {

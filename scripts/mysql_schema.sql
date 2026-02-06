@@ -65,3 +65,5 @@ CREATE TABLE IF NOT EXISTS Feedback (
   updatedAt DATETIME NOT NULL,
   INDEX (stepId)
 );
+
+select * from Step;
