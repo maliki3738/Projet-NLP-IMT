@@ -56,135 +56,61 @@ async def start():
 
     logger.info(f"🆕 Nouvelle session créée: {session_id}")
 
-    # Afficher les sessions actives dans l'interface
-    sessions = memory.list_sessions()
-    
-    # Créer un affichage HTML des sessions
-    sessions_html = """
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                border-radius: 12px; 
-                padding: 20px; 
-                margin: 10px 0; 
-                color: white;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h3 style="margin: 0 0 15px 0; font-size: 18px; display: flex; align-items: center;">
-            <span style="margin-right: 8px;">💬</span> Sessions Actives ({}/3)
-        </h3>
-    """.format(len(sessions))
-    
-    if sessions:
-        for i, sess in enumerate(sessions, 1):
-            is_current = sess['session_id'] == session_id
-            ttl_min = sess['ttl_remaining'] // 60
-            status_icon = "🟢" if is_current else "⚪"
-            border = "2px solid #ffd700" if is_current else "1px solid rgba(255,255,255,0.3)"
-            
-            sessions_html += f"""
-            <div style="background: rgba(255,255,255,0.1); 
-                        border: {border}; 
-                        border-radius: 8px; 
-                        padding: 12px; 
-                        margin: 8px 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span style="font-weight: bold;">{status_icon} Session {i}</span>
-                        {' (Actuelle)' if is_current else ''}
-                    </div>
-                    <div style="font-size: 12px; opacity: 0.9;">
-                        ⏱️ {ttl_min} min restantes
-                    </div>
-                </div>
-                <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">
-                    💬 {sess['message_count']} messages
-                </div>
-            </div>
-            """
-    else:
-        sessions_html += """
-        <p style="text-align: center; opacity: 0.8; margin: 10px 0;">
-            Aucune session active
-        </p>
-        """
-    
-    sessions_html += """
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); 
-                    font-size: 12px; opacity: 0.8;">
-            ℹ️ Maximum 3 sessions simultanées • 1h de validité • Suppression auto de la plus ancienne
-        </div>
-    </div>
-    """
-    
-    # Envoyer le widget des sessions
-    await cl.Message(
-        content=sessions_html,
-        author="System"
-    ).send()
-    
-    # Message de bienvenue
+    # Afficher les sessions actives dans le sidebar
+    await display_active_sessions(session_id)
+
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
     ).send()
+
+async def display_active_sessions(current_session_id: str):
+    """Affiche les sessions actives (max 3) dans le sidebar.
+    
+    La session actuelle n'est pas affichée (elle est déjà ouverte).
+    Donc on affiche les 2 autres sessions max.
+    """
+    try:
+        sessions = memory.list_sessions()
+        
+        # Filtrer la session actuelle
+        other_sessions = [s for s in sessions if s.get("session_id") != current_session_id]
+        
+        if not other_sessions:
+            # Aucune autre session, pas de sidebar
+            return
+        
+        # Construire le contenu du sidebar
+        sidebar_content = "## 💬 Discussions récentes\n\n"
+        sidebar_content += f"*Vous avez {len(other_sessions)} autre(s) discussion(s) active(s)*\n\n"
+        
+        for i, sess in enumerate(other_sessions[:2], 1):  # Max 2 autres sessions
+            sess_id = sess.get("session_id", "N/A")[:8]  # Afficher les 8 premiers caractères
+            msg_count = sess.get("message_count", 0)
+            ttl = sess.get("ttl_remaining", 0)
+            ttl_min = ttl // 60
+            
+            sidebar_content += f"**Session {i}** (`{sess_id}...`)\n"
+            sidebar_content += f"- 💬 {msg_count} message(s)\n"
+            sidebar_content += f"- ⏱️ Expire dans {ttl_min} min\n\n"
+        
+        sidebar_content += "---\n\n"
+        sidebar_content += f"**Session actuelle:** `{current_session_id[:8]}...`\n"
+        sidebar_content += f"**Limite:** {memory.MAX_SESSIONS} sessions max | TTL: {memory.SESSION_TTL//60}min"
+        
+        # Envoyer dans le sidebar (via cl.Message avec author="System")
+        await cl.Message(
+            content=sidebar_content,
+            author="📊 Statistiques"
+        ).send()
+        
+    except Exception as e:
+        logger.warning(f"Impossible d'afficher les sessions: {e}")
 
 @cl.on_message
 async def main(message: cl.Message):
     user_message = message.content.strip()
 
     session_id = cl.user_session.get("session_id")
-    
-    # Commande spéciale : afficher les sessions
-    if user_message.lower() in ['/sessions', '/status', '/info']:
-        sessions = memory.list_sessions()
-        
-        sessions_html = """
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    border-radius: 12px; 
-                    padding: 20px; 
-                    margin: 10px 0; 
-                    color: white;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3 style="margin: 0 0 15px 0; font-size: 18px; display: flex; align-items: center;">
-                <span style="margin-right: 8px;">💬</span> Sessions Actives ({}/3)
-            </h3>
-        """.format(len(sessions))
-        
-        if sessions:
-            for i, sess in enumerate(sessions, 1):
-                is_current = sess['session_id'] == session_id
-                ttl_min = sess['ttl_remaining'] // 60
-                status_icon = "🟢" if is_current else "⚪"
-                border = "2px solid #ffd700" if is_current else "1px solid rgba(255,255,255,0.3)"
-                
-                sessions_html += f"""
-                <div style="background: rgba(255,255,255,0.1); 
-                            border: {border}; 
-                            border-radius: 8px; 
-                            padding: 12px; 
-                            margin: 8px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-weight: bold;">{status_icon} Session {i}</span>
-                            {' (Actuelle)' if is_current else ''}
-                        </div>
-                        <div style="font-size: 12px; opacity: 0.9;">
-                            ⏱️ {ttl_min} min restantes
-                        </div>
-                    </div>
-                    <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">
-                        💬 {sess['message_count']} messages
-                    </div>
-                </div>
-                """
-        
-        sessions_html += """
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); 
-                        font-size: 12px; opacity: 0.8;">
-                💡 Tapez /sessions pour voir ce panneau à tout moment
-            </div>
-        </div>
-        """
-        
-        await cl.Message(content=sessions_html, author="System").send()
-        return
     
     # Stocker le message dans la session Chainlit
     messages = cl.user_session.get("messages")
