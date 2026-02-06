@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS chainlit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE chainlit;
+CREATE DATABASE IF NOT EXISTS chainlit_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE chainlit_db;
 
 CREATE TABLE IF NOT EXISTS User (
   id CHAR(36) PRIMARY KEY,
@@ -66,4 +66,3 @@ CREATE TABLE IF NOT EXISTS Feedback (
   INDEX (stepId)
 );
 
-select * from Step;

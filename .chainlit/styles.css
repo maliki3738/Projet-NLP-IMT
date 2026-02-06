@@ -140,10 +140,26 @@ img[alt*="avatar" i] {
 /* Sidebar "ChatGPT-like" layout */
 aside,
 .sidebar,
-[data-side] {
-  width: 280px;
-  min-width: 260px;
-  max-width: 320px;
+.cl-sidebar,
+[data-side],
+[data-testid*="sidebar" i],
+[data-testid*="history" i],
+[data-testid*="thread" i] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+}
+
+/* Hide sidebar toggle buttons */
+button[aria-label*="sidebar" i],
+button[aria-label*="toggle" i],
+[data-testid*="sidebar" i] button {
+  display: none !important;
 }
 
 /* Ensure sidebar toggle is visible */
