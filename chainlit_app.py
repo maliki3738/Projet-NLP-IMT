@@ -86,19 +86,26 @@ async def on_audio_start():
     return True
 
 @cl.on_audio_chunk
-async def on_audio_chunk(chunk: cl.AudioChunk):
-    """Reçoit les morceaux audio pendant l'enregistrement (streaming STT)."""
+async def on_audio_chunk(chunk):
+    """Reçoit les morceaux audio pendant l'enregistrement (streaming STT).
+    
+    Args:
+        chunk: Dictionnaire contenant les données audio brutes
+    """
     # Chainlit gère automatiquement la transcription via Web Speech API
     pass
 
 @cl.on_audio_end
-async def on_audio_end(elements: list[cl.Element]):
+async def on_audio_end(elements: list):
     """Appelé quand l'enregistrement vocal se termine.
     
     Args:
         elements: Liste contenant l'audio transcrit en texte
     """
-    logger.info(f"🎤 Enregistrement vocal terminé ({len(elements)} éléments reçus)")
+    if elements:
+        logger.info(f"🎤 Enregistrement vocal terminé ({len(elements)} éléments reçus)")
+    else:
+        logger.info("🎤 Enregistrement vocal terminé (transcription automatique)")
     # Le texte transcrit est automatiquement envoyé comme message via on_message
     pass
 
