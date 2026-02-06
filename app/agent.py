@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
@@ -462,6 +463,102 @@ def _answer_personal_question(question: str, entities: dict) -> str:
     
     return None
 
+def _detect_inappropriate_content(question: str) -> Optional[str]:
+    """Détecte les comparaisons, insultes et propos interdits.
+    
+    Args:
+        question: La question de l'utilisateur
+    
+    Returns:
+        Un message de refus poli si contenu inapproprié détecté, None sinon
+    """
+    q_lower = question.lower().strip()
+    
+    # 1. Détection des comparaisons avec d'autres établissements
+    comparison_patterns = [
+        # Comparaisons directes
+        r'imt.*(?:meilleur|mieux|supérieur|plus|vs|versus|contre).*(?:esp|ucad|ept|enstp|polytechnique|autre|école)',
+        r'(?:esp|ucad|ept|enstp|polytechnique|autre|école).*(?:meilleur|mieux|supérieur|plus|vs|versus|contre).*imt',
+        r'compar.*(?:imt|école)',
+        # Questions "quelle école est..."
+        r'quelle.*école.*(?:meilleur|mieux|nul|mauvais)',
+        r'(?:esp|ucad|ept|enstp).*(?:ou|vs).*imt',
+        # Expressions négatives comparatives
+        r'imt.*(?:pas|moins|pire).*(?:esp|ucad|ept|enstp)',
+    ]
+    
+    for pattern in comparison_patterns:
+        if re.search(pattern, q_lower, re.IGNORECASE):
+            logger.warning(f"Comparaison détectée : {question[:50]}...")
+            return (
+                "🎓 **IMT Dakar - Politique de neutralité**\n\n"
+                "Je ne peux pas comparer l'Institut Mines-Télécom Dakar avec d'autres établissements. "
+                "Chaque école a ses propres atouts et spécificités.\n\n"
+                "✨ **Je peux vous informer sur :**\n"
+                "• Les programmes et formations de l'IMT Dakar\n"
+                "• Les admissions et modalités d'inscription\n"
+                "• Les infrastructures et services disponibles\n"
+                "• Les contacts de l'administration\n\n"
+                "💡 Comment puis-je vous aider à mieux connaître l'IMT Dakar ?"
+            )
+    
+    # 2. Détection des insultes et dénigrement
+    insult_keywords = [
+        # Insultes directes (avec espaces pour éviter faux positifs)
+        ' nul ', ' nulle ', ' nul.', ' nulle.', ' nul!', ' nulle!', ' nul?', ' nulle?',
+        ' pourri ', ' pourrie ', ' merde ', ' con ', ' connard ', ' idiot ', ' débile ',
+        ' stupide ', ' crétin ', ' imbécile ', ' abruti ', ' incompétent ',
+        # Expressions avec "est"
+        ' est nul', ' est nulle', ' est pourri', ' est pourrie',
+        "c'est nul", "c'est nulle", "c'est pourri",
+        "vous êtes nul", "tu es nul",
+        # Expressions négatives fortes
+        'école de merde', 'pire école', 'mauvaise école', ' zéro ',
+        # Dénigrement ciblé
+        'imt nul', 'professeur nul', 'formation nulle', 'formation pourrie',
+        'arnaque', 'escroquerie', 'foutaise',
+    ]
+    
+    for keyword in insult_keywords:
+        if keyword in q_lower:
+            logger.warning(f"Insulte/dénigrement détecté : {question[:50]}...")
+            return (
+                "🙏 **Message important**\n\n"
+                "Je ne peux pas répondre à ce type de message. "
+                "Je suis ici pour vous aider de manière constructive et respectueuse.\n\n"
+                "✨ **Je suis à votre disposition pour :**\n"
+                "• Répondre à vos questions sur l'IMT Dakar\n"
+                "• Vous orienter vers les bons interlocuteurs\n"
+                "• Vous fournir des informations fiables\n\n"
+                "💡 Reformulez votre demande de manière respectueuse, je serai ravi de vous aider !"
+            )
+    
+    # 3. Détection de propos offensants généraux
+    offensive_patterns = [
+        r'ferme.*(?:ta gueule|bouche)',
+        r'va te faire',
+        r'\btg\b',  # "ta gueule" en abrégé
+        r'\bftg\b',  # "ferme ta gueule"
+        r'\bntm\b',  # insulte courante
+        r'fils de',
+        r'pd\b',
+        r'salope',
+        r'pute',
+    ]
+    
+    for pattern in offensive_patterns:
+        if re.search(pattern, q_lower, re.IGNORECASE):
+            logger.warning(f"Propos offensant détecté : {question[:50]}...")
+            return (
+                "🛑 **Contenu inapproprié**\n\n"
+                "Je ne peux pas répondre à ce type de message. "
+                "Restons dans un échange respectueux et constructif.\n\n"
+                "✨ Je suis un assistant virtuel conçu pour vous aider avec des informations sur l'IMT Dakar. "
+                "Reformulez votre question de manière polie et je serai heureux de vous assister."
+            )
+    
+    return None
+
 def agent(question: str, history: list = None, memory_manager=None, session_id: str = None) -> str:
     """Fonction principale de l'agent.
 
@@ -474,7 +571,12 @@ def agent(question: str, history: list = None, memory_manager=None, session_id: 
         logger.warning("Question vide reçue")
         return "Désolé, je n'ai pas compris votre question. Pouvez-vous reformuler ?"
     
-    # 1. Extraire et stocker les informations personnelles
+    # 1. Vérifier les comparaisons, insultes et propos interdits
+    inappropriate_response = _detect_inappropriate_content(question)
+    if inappropriate_response:
+        return inappropriate_response
+    
+    # 2. Extraire et stocker les informations personnelles
     if memory_manager and session_id:
         personal_info = _extract_personal_info(question)
         if personal_info:
@@ -492,7 +594,7 @@ def agent(question: str, history: list = None, memory_manager=None, session_id: 
             elif 'phone' in personal_info:
                 return f"✅ J'ai bien noté votre numéro : **{personal_info['phone']}**"
     
-    # 2. Vérifier si c'est une question personnelle
+    # 3. Vérifier si c'est une question personnelle
     if memory_manager and session_id:
         entities = memory_manager.get_all_entities(session_id)
         personal_answer = _answer_personal_question(question, entities)
@@ -501,7 +603,7 @@ def agent(question: str, history: list = None, memory_manager=None, session_id: 
     
     logger.info(f"Question reçue : {question}")
     
-    # 3. Enrichir les questions courtes avec le contexte de la conversation
+    # 4. Enrichir les questions courtes avec le contexte de la conversation
     enriched_question = question
     if memory_manager and session_id and len(question.split()) <= 3:
         recent_history = _get_recent_history(memory_manager, session_id, limit=2)
