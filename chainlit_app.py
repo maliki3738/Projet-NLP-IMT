@@ -49,12 +49,18 @@ def format_response(question: str, context: str) -> str:
 
 @cl.on_chat_start
 async def start():
+    # Créer un ID unique pour la session Redis
     session_id = str(uuid.uuid4())
     memory.create_session(session_id)
     cl.user_session.set("session_id", session_id)
     cl.user_session.set("messages", [])
 
     logger.info(f"🆕 Nouvelle session créée: {session_id}")
+    
+    # Le thread Chainlit est créé automatiquement par le data layer
+    # On récupère son ID via cl.context.session
+    thread_id = cl.context.session.id if cl.context.session else session_id
+    logger.info(f"📝 Thread Chainlit ID: {thread_id}")
 
     await cl.Message(
         content="Bonjour ! Je suis l'assistant de l'Institut Mines-Télécom Dakar. Comment puis-je vous aider ?"
