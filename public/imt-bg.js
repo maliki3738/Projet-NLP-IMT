@@ -293,12 +293,11 @@
     }
   }
 
-  // Animation audio désactivée pour éviter la demande d'autorisation micro
-  // Les fonctionnalités STT/TTS sont gérées nativement par Chainlit
+  // Animation visuelle uniquement (pas de micro requis)
   function setupAudio() {
     if (audioReady) return;
     audioReady = true;
-    // Fallback : animation par pulsation idle (pas de micro requis)
+    // Animation par pulsation idle
     let t = 0;
     const idle = () => {
       t += 0.03;

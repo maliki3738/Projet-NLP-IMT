@@ -29,15 +29,8 @@ max_files = 20
 max_size_mb = 500
 
 [features.audio]
-# Speech-to-Text (STT) : bouton micro dans la barre de saisie
-# Text-to-Speech (TTS) : bouton lecture audio sur les messages de l'agent
-enabled = true
-min_decibels = -45
-initial_silence_timeout = 3000
-silence_timeout = 1500
-max_duration = 15000
-sample_rate = 44100
-chunk_duration = 1000
+# Désactivé : nécessite implémentation backend complète (STT/TTS API)
+enabled = false
 
 [features.mcp]
 enabled = false

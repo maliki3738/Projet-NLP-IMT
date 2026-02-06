@@ -79,33 +79,6 @@ async def on_chat_resume():
     logger.info("🔄 Thread Chainlit restauré depuis le sidebar UI")
     pass
 
-@cl.on_audio_start
-async def on_audio_start():
-    """Appelé quand l'utilisateur commence un enregistrement vocal (STT)."""
-    logger.info("🎤 Enregistrement vocal démarré")
-    return True
-
-@cl.on_audio_chunk
-async def on_audio_chunk(chunk):
-    """Reçoit les morceaux audio pendant l'enregistrement (streaming STT).
-    
-    Args:
-        chunk: Dictionnaire contenant les données audio brutes
-    """
-    # Chainlit gère automatiquement la transcription via Web Speech API
-    pass
-
-@cl.on_audio_end
-async def on_audio_end():
-    """Appelé quand l'enregistrement vocal se termine.
-    
-    Note : Chainlit transcrit automatiquement l'audio via Web Speech API
-    et envoie le texte transcrit comme message via on_message.
-    """
-    logger.info("🎤 Enregistrement vocal terminé (transcription automatique)")
-    # Le texte transcrit est automatiquement envoyé comme message via on_message
-    pass
-
 @cl.on_message
 async def main(message: cl.Message):
     user_message = message.content.strip()
@@ -211,23 +184,4 @@ async def main(message: cl.Message):
     if session_id:
         memory.add_message(session_id, "assistant", response)
     
-    # Créer un bouton TTS (Text-to-Speech) sur le message
-    actions = [
-        cl.Action(name="tts", payload={"text": response}, label="🔊 Écouter", description="Lire ce message à voix haute")
-    ]
-    
-    await cl.Message(content=response, actions=actions).send()
-
-@cl.action_callback("tts")
-async def on_tts_action(action: cl.Action):
-    """Callback pour le bouton TTS - lit le message à voix haute."""
-    # Récupérer le texte depuis le payload
-    text = action.payload.get("text", "")
-    
-    # Envoyer un message audio (nécessite que le navigateur supporte Web Speech API)
-    await cl.Message(
-        content=f"🔊 **Lecture audio en cours...**\n\nTexte : _{text[:100]}..._\n\n⚠️ **Note** : Le TTS côté serveur nécessite une API externe (Google TTS, OpenAI TTS, ElevenLabs).\nActuellement, utilisez la fonction de lecture du navigateur (sélectionnez le texte → clic droit → Lire).",
-        author="System"
-    ).send()
-    
-    logger.info(f"🔊 Bouton TTS cliqué pour texte de {len(text)} caractères")
+    await cl.Message(content=response).send()
