@@ -1,103 +1,120 @@
-# Guide d'activation Langfuse pour IMT Agent
+# 📊 Configuration Langfuse - Observabilité LLM
 
-## 🎯 Vue d'ensemble
+> Plateforme d'observabilité pour tracer les appels LLM, monitorer les coûts et analyser les performances.
 
-Langfuse est une plateforme d'observabilité pour applications LLM qui permet de :
-- Tracer tous les appels aux modèles (Gemini, Grok, OpenAI)
-- Monitorer les coûts et latences
-- Analyser les performances des prompts
-- Déboguer les conversations
+---
 
-## ⏱️ Temps estimé : 6-7 minutes
+## Création Compte (2 minutes)
 
-## 📋 Prérequis
+1. Aller sur https://cloud.langfuse.com
+2. **Sign Up** avec email/GitHub/Google
+3. Confirmer l'email
+4. Créer un projet : `imt-agent`
 
-- ✅ Code déjà intégré dans `app/agent.py`
-- ✅ Package `langfuse` installé
-- ❌ Compte Langfuse à créer
-- ❌ Clés API à récupérer
+**Plan gratuit** : 50 000 événements/mois
 
-## 🚀 Étapes d'activation
+---
 
-### Étape 1 : Créer un compte Langfuse (2 minutes)
+## Récupération Clés API (1 minute)
 
-1. Aller sur : https://cloud.langfuse.com
-2. Cliquer sur **Sign Up**
-3. S'inscrire avec email (ou GitHub/Google)
-4. Confirmer l'email
-5. Créer un projet : `imt-agent` (ou autre nom)
+1. Dashboard Langfuse → **Settings** ⚙️ → **API Keys**
+2. **Create new API key**
+3. Copier les 2 clés :
+   - `LANGFUSE_PUBLIC_KEY` (pk-lf-...)
+   - `LANGFUSE_SECRET_KEY` (sk-lf-...)
 
-**Plan gratuit** : 50 000 événements/mois (largement suffisant)
+⚠️ La clé secrète ne s'affiche qu'une fois !
 
-### Étape 2 : Récupérer les clés API (1 minute)
+---
 
-1. Dans le dashboard Langfuse
-2. Aller dans **Settings** (⚙️) → **API Keys**
-3. Cliquer sur **Create new API key**
-4. Copier les deux clés :
-   - `LANGFUSE_PUBLIC_KEY` (commence par `pk-lf-...`)
-   - `LANGFUSE_SECRET_KEY` (commence par `sk-lf-...`)
+## Configuration `.env`
 
-⚠️ **Important** : La clé secrète ne sera affichée qu'une seule fois !
-
-### Étape 3 : Ajouter les clés dans .env (1 minute)
-
-Ouvrir le fichier `.env` et ajouter :
-
-```bash
+```env
 # Langfuse Observability
 LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxxxxxxxxxxxxx
 LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxxxxxxxxxxxxx
 LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
-Sauvegarder le fichier.
+---
 
-### Étape 4 : Tester l'activation (2 minutes)
+## Test
 
-1. **Redémarrer Chainlit** (pour charger les nouvelles variables) :
-   ```bash
-   pkill -f chainlit
-   ./start_chainlit.sh
-   ```
+```bash
+# Redémarrer Chainlit
+chainlit run chainlit_app.py
 
-2. **Ou tester directement** :
-   ```bash
-   python test_agent_rag.py
-   ```
+# Vérifier logs
+# ✅ "Langfuse configuré avec succès"
+# au lieu de ⚠️ "Langfuse non disponible"
+```
 
-3. **Vérifier les logs** - Vous devez voir :
-   ```
-   ✅ Langfuse configuré avec succès
-   ```
+---
 
-   Au lieu de :
-   ```
-   ⚠️ Langfuse non disponible
-   ```
+## Dashboard Langfuse
 
-### Étape 5 : Vérifier le dashboard (1 minute)
+**Accès** : https://cloud.langfuse.com → Projet `imt-agent`
 
-1. Retourner sur https://cloud.langfuse.com
-2. Cliquer sur votre projet `imt-agent`
-3. Aller dans l'onglet **Traces**
-4. Vous devriez voir les traces des appels LLM :
-   - Modèle utilisé (Gemini/Grok/OpenAI)
-   - Prompt envoyé
-   - Réponse reçue
-   - Latence (temps de réponse)
-   - Tokens utilisés
+### Onglets Disponibles
 
-**Prendre un screenshot** pour le README !
+| Onglet | Information |
+|--------|-------------|
+| **Traces** | Tous les appels LLM en temps réel |
+| **Analytics** | Statistiques tokens, coûts, latences |
+| **Prompts** | Historique des prompts utilisés |
+| **Users** | Sessions utilisateurs |
 
-## 📊 Utilisation du dashboard
+### Exemple de Trace
 
-### Traces
-- Voir tous les appels LLM en temps réel
-- Cliquer sur une trace pour voir les détails complets
-- Filtrer par modèle, utilisateur, session
+```json
+{
+  "model": "gemini-2.5-flash",
+  "tokens_input": 125,
+  "tokens_output": 89,
+  "cost_usd": 0.0,
+  "latency_ms": 1200,
+  "status": "success"
+}
+```
 
-### Analytics
+---
+
+## Données Trackées
+
+```python
+# Code dans app/agent.py
+langfuse_client.create_event(
+    name="gemini_response",
+    metadata={
+        "model": "gemini-2.5-flash",
+        "tokens_input": input_tokens,
+        "tokens_output": output_tokens,
+        "cost_usd": 0.0  # Gemini gratuit
+    },
+    input=prompt[:500],
+    output=result[:500]
+)
+```
+
+**Metrics** :
+- Tokens input/output
+- Coûts USD (Grok, OpenAI)
+- Latence (ms)
+- Taux d'erreur
+
+---
+
+## Dépannage
+
+| Problème | Solution |
+|----------|----------|
+| Clés invalides | Vérifier copié/collé sans espaces |
+| Pas de traces | Redémarrer app après config .env |
+| Dashboard vide | Tester avec `python test_agent_rag.py` |
+
+---
+
+**Documentation** : [app/agent.py](../app/agent.py) (lignes 340-360)
 - Coûts par modèle
 - Latences moyennes
 - Tokens utilisés par jour

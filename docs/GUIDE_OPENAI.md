@@ -1,53 +1,83 @@
-# 🤖 Guide d'utilisation OpenAI GPT
+# 🤖 Configuration OpenAI GPT - Fallback LLM
 
-## ✅ Configuration rapide (5 minutes)
+> OpenAI GPT-4o-mini comme 3ème fallback après Gemini et Grok.
 
-### Étape 1 : Créer un compte OpenAI
-1. Aller sur https://platform.openai.com/signup
-2. Créer un compte (email + vérification)
-3. Accepter les conditions d'utilisation
+---
 
-### Étape 2 : Ajouter du crédit
+## Configuration Rapide
+
+### 1. Créer Compte OpenAI
+
+1. S'inscrire : https://platform.openai.com/signup
+2. Vérifier l'email
+3. Accepter les conditions
+
+### 2. Ajouter Crédit
+
 1. Aller sur https://platform.openai.com/settings/organization/billing/overview
-2. Cliquer sur **"Add payment method"**
-3. Ajouter une carte bancaire
-4. Acheter **5$ de crédits** (minimum requis)
-   - ⚠️ Note : Ton usage réel sera ~0.04$ à 0.32$ pour 1 semaine
-   - Le reste des crédits reste disponible plusieurs mois
+2. **Add payment method** (carte bancaire)
+3. Acheter **5$** minimum (usage réel ~$0.10/semaine)
 
-### Étape 3 : Générer une clé API
+### 3. Générer Clé API
+
 1. Aller sur https://platform.openai.com/api-keys
-2. Cliquer sur **"Create new secret key"**
-3. Donner un nom : `IMT-Agent`
-4. Copier la clé (elle commence par `sk-proj-...`)
-   - ⚠️ **IMPORTANT** : Tu ne pourras plus la revoir, sauvegarde-la !
+2. **Create new secret key**
+3. Nom : `IMT-Agent`
+4. Copier la clé `sk-proj-...`
 
-### Étape 4 : Configurer dans `.env`
-```bash
-# Ouvrir le fichier .env
-nano .env
+⚠️ **Important** : La clé ne s'affiche qu'une fois !
 
-# Ajouter ta clé (remplacer YOUR_KEY par ta vraie clé)
+### 4. Configuration `.env`
+
+```env
+# OpenAI GPT (fallback 2)
 OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-### Étape 5 : Tester
-```bash
-# Relancer l'agent
-python3 -c "from app.agent import agent; print(agent('C\'est quoi l\'IMT?'))"
 ```
 
 ---
 
-## 💰 Coûts détaillés
+## Coûts
 
-### Modèle utilisé : **GPT-4o-mini**
-- Le moins cher d'OpenAI
-- Parfait pour reformulation de texte
-- Largement suffisant pour ton usage
+**Modèle** : GPT-4o-mini (le moins cher)
 
-### Tarifs
-- **Entrée** : 0.15 $/1M tokens
+| Usage | Tokens | Coût |
+|-------|--------|------|
+| Entrée | 1M | $0.15 |
+| Sortie | 1M | $0.60 |
+
+**Estimation 1 semaine** :
+- 100 requêtes × ~200 tokens = 20k tokens
+- Coût : ~$0.02 entrée + $0.01 sortie = **$0.03/semaine**
+
+---
+
+## Test
+
+```bash
+# Test agent avec fallback OpenAI
+python -c "from app.agent import agent; print(agent('Test OpenAI'))"
+
+# Vérifier logs
+# Si Gemini et Grok échouent : "🤖 Tentative OpenAI..."
+```
+
+---
+
+## Cascade de Fallback
+
+```
+1. Gemini 2.5 Flash (gratuit, 1500 req/jour)
+   ↓ échec
+2. Grok (xAI, $5/$15 par 1M)
+   ↓ échec
+3. OpenAI GPT-4o-mini ($0.15/$0.60 par 1M)  ← Vous êtes ici
+   ↓ échec
+4. Heuristique simple (keywords)
+```
+
+---
+
+**Documentation** : [app/agent.py](../app/agent.py) (fonction `_call_openai`)
 - **Sortie** : 0.60 $/1M tokens
 
 ### Estimation pour 1 semaine

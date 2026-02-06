@@ -1,69 +1,36 @@
-# 📧 Guide de Configuration SMTP - Envoi d'Emails Réels
+# 📧 Configuration SMTP - Envoi d'Emails
 
-Ce guide explique comment configurer l'envoi d'emails réels avec l'agent IMT.
-
----
-
-## 🎯 Vue d'ensemble
-
-L'agent IMT peut envoyer de vrais emails via SMTP. Par défaut, il fonctionne en **mode simulation** si aucune configuration n'est fournie.
-
-### Modes de fonctionnement
-
-| Mode | Configuration | Comportement |
-|------|---------------|--------------|
-| **Simulation** | Aucune | Affiche l'email sans l'envoyer |
-| **Réel** | Variables d'environnement | Envoie vraiment l'email |
+> Guide rapide pour configurer l'envoi d'emails réels avec Gmail ou Outlook.
 
 ---
 
-## 📝 Configuration Étape par Étape
+## Configuration Gmail (Recommandé)
 
-### Méthode 1 : Gmail (Recommandé)
+### 1. Créer un Mot de Passe d'Application
 
-#### Étape 1 : Activer la validation en 2 étapes
-1. Aller sur [myaccount.google.com](https://myaccount.google.com)
-2. Menu **Sécurité** → **Validation en 2 étapes**
-3. Suivre les instructions pour activer
+1. Activer la **Validation en 2 étapes** : [myaccount.google.com](https://myaccount.google.com) → Sécurité
+2. Créer un **Mot de passe d'application** : [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+   - App : Mail
+   - Appareil : Autre (IMT Agent)
+   - Copier le code 16 caractères généré
 
-#### Étape 2 : Créer un mot de passe d'application
-1. Aller sur [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-2. Sélectionner **App** : "Mail"
-3. Sélectionner **Appareil** : "Autre (nom personnalisé)"
-4. Saisir : "IMT Agent"
-5. Cliquer sur **Générer**
-6. **Copier le mot de passe de 16 caractères** (sans espaces)
+### 2. Configuration `.env`
 
-⚠️ **Important** : Ce mot de passe ne s'affiche qu'une seule fois !
-
-#### Étape 3 : Configurer le fichier `.env`
-Créer/éditer le fichier `.env` à la racine du projet :
-
-```bash
-# Configuration Email SMTP
-EMAIL_USER=votre_email@gmail.com
-EMAIL_PASS=abcd efgh ijkl mnop    # Mot de passe d'application (16 caractères)
-EMAIL_TO=directeur@imt.sn          # Destinataire par défaut
-
-# Configuration serveur (optionnel, valeurs par défaut OK pour Gmail)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-```
-
-**Exemple complet** :
 ```env
-EMAIL_USER=john.doe@gmail.com
-EMAIL_PASS=abcdefghijklmnop
+# Email SMTP
+EMAIL_USER=votre_email@gmail.com
+EMAIL_PASS=abcdefghijklmnop  # Mot de passe application (16 car.)
 EMAIL_TO=contact@imt.sn
+
+# Serveur (optionnel, valeurs par défaut)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 ```
 
 ---
 
-### Méthode 2 : Outlook / Hotmail
+## Configuration Outlook
 
-#### Configuration Outlook.com
 ```env
 EMAIL_USER=votre_email@outlook.com
 EMAIL_PASS=votre_mot_de_passe
@@ -72,31 +39,43 @@ SMTP_HOST=smtp-mail.outlook.com
 SMTP_PORT=587
 ```
 
-⚠️ **Note** : Outlook peut nécessiter l'activation de "Applications moins sécurisées"
-
 ---
 
-### Méthode 3 : Autre Fournisseur
+## Serveurs SMTP Courants
 
-#### Serveurs SMTP courants
-
-| Fournisseur | SMTP_HOST | SMTP_PORT |
-|-------------|-----------|-----------|
+| Fournisseur | SMTP_HOST | Port |
+|-------------|-----------|------|
 | Gmail | smtp.gmail.com | 587 |
 | Outlook | smtp-mail.outlook.com | 587 |
 | Yahoo | smtp.mail.yahoo.com | 587 |
-| SendGrid | smtp.sendgrid.net | 587 |
-| Mailgun | smtp.mailgun.org | 587 |
 
 ---
 
-## 🧪 Test de la Configuration
-
-### Test en ligne de commande
+## Test
 
 ```bash
-# Activer l'environnement
-source venv/bin/activate
+# Test rapide
+python -c "from app.tools import send_email; print(send_email('Test', 'Ceci est un test'))"
+
+# Doit afficher
+✅ Email envoyé avec succès !
+```
+
+---
+
+## Dépannage
+
+| Erreur | Solution |
+|--------|----------|
+| `Authentication failed` | Vérifier EMAIL_USER et EMAIL_PASS |
+| `Connection refused` | Vérifier SMTP_HOST et SMTP_PORT |
+| `Recipient refused` | Vérifier EMAIL_TO (email valide) |
+
+**Logs** : Vérifier dans la console Chainlit ou avec `pytest tests/test_tools.py -v`
+
+---
+
+**Documentation** : [app/tools.py](../app/tools.py) (fonction `send_email`)
 
 # Tester l'envoi d'email
 python -c "

@@ -382,6 +382,27 @@ pytest tests/test_tools.py -v      # Tests outils
 
 ---
 
+## 📄 Documentation Technique
+
+### Guides de Configuration
+
+| Guide | Description | Lien |
+|-------|-------------|------|
+| **Architecture Agent** | Fonctionnement agent intelligent avec LangChain | [AGENT_INTELLIGENT.md](docs/AGENT_INTELLIGENT.md) |
+| **Configuration SMTP** | Envoi d'emails avec Gmail/Outlook | [GUIDE_SMTP.md](docs/GUIDE_SMTP.md) |
+| **Configuration Langfuse** | Observabilité et traces LLM | [GUIDE_LANGFUSE.md](docs/GUIDE_LANGFUSE.md) |
+| **Configuration OpenAI** | Fallback LLM avec GPT-4o-mini | [GUIDE_OPENAI.md](docs/GUIDE_OPENAI.md) |
+
+### Fichiers Importants
+
+- **Code Principal** : [chainlit_app.py](chainlit_app.py), [app/agent.py](app/agent.py)
+- **Outils** : [app/tools.py](app/tools.py), [app/langchain_tools.py](app/langchain_tools.py)
+- **RAG** : [app/vector_search.py](app/vector_search.py)
+- **Playwright** : [app/playwright_form.py](app/playwright_form.py)
+- **Tests** : [tests/](tests/)
+
+---
+
 ## 📄 Licence & Ressources
 
 **Licence** : MIT (Usage académique IMT Sénégal)
@@ -391,11 +412,6 @@ pytest tests/test_tools.py -v      # Tests outils
 - 🌐 [Site IMT](https://www.imt.sn)
 - 📧 Contact : contact@imt.sn | +221 33 859 73 73
 - 📍 Adresse : km1 Avenue Cheikh Anta Diop, Dakar, Sénégal
-
-**Documentation** :
-- [GUIDE_SMTP.md](docs/GUIDE_SMTP.md) : Configuration Gmail/Outlook
-- [GUIDE_LANGFUSE.md](docs/GUIDE_LANGFUSE.md) : Observabilité LLM
-- [AGENT_INTELLIGENT.md](docs/AGENT_INTELLIGENT.md) : Architecture agent
 
 ---
 
