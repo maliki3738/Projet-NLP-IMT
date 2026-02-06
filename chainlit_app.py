@@ -155,14 +155,54 @@ async def main(message: cl.Message):
     if session_id:
         memory.add_message(session_id, "user", user_message)
     
-    # Détecter si c'est une demande d'email
+    # Détecter si c'est une demande d'envoi d'email avec extraction objet/contenu
     query_lower = user_message.lower()
-    email_keywords = ["email", "envoyer", "envoie", "ecris", "contacter"]
     
-    if any(kw in query_lower for kw in email_keywords) and "comment" not in query_lower:
+    # Mots-clés forts indiquant une action d'envoi
+    send_keywords = ["contacte", "envoie", "envoyer", "écris", "ecris", "transmet", "transmets", "mail", "email"]
+    # Mots-clés de questions (pas d'action)
+    question_keywords = ["comment contacter", "où contacter", "quel est le contact", "comment envoyer"]
+    
+    # Vérifier si c'est une vraie demande d'action
+    is_send_request = any(kw in query_lower for kw in send_keywords)
+    is_question = any(kw in query_lower for kw in question_keywords)
+    
+    if is_send_request and not is_question:
+        # Extraire l'objet personnalisé (après "objet:", "sujet:", ou entre guillemets)
+        subject = "Demande d'informations - IMT Dakar"  # Par défaut
+        content = user_message  # Par défaut
+        
+        # Pattern 1: "objet: XXX" ou "sujet: XXX"
+        objet_match = re.search(r'(?:objet|sujet)\s*[:=]\s*([^\n]+)', user_message, re.IGNORECASE)
+        if objet_match:
+            subject = objet_match.group(1).strip()
+        
+        # Pattern 2: "message: XXX" ou "contenu: XXX"
+        message_match = re.search(r'(?:message|contenu)\s*[:=]\s*([^\n]+)', user_message, re.IGNORECASE)
+        if message_match:
+            content = message_match.group(1).strip()
+        elif objet_match:
+            # Si objet trouvé, le reste est le contenu
+            content = user_message.replace(objet_match.group(0), "").strip()
+        
+        # Extraire les informations utilisateur (nom, localisation)
+        user_info = []
+        name_match = re.search(r'(?:je m\'appelle|mon nom est|je suis)\s+([A-ZÀ-ÿa-z\s]+)', user_message, re.IGNORECASE)
+        if name_match:
+            user_info.append(f"Nom : {name_match.group(1).strip()}")
+        
+        location_match = re.search(r'(?:je vis|j\'habite|réside|viens de)\s+(?:à|au|en)\s+([A-ZÀ-ÿa-z\s]+)', user_message, re.IGNORECASE)
+        if location_match:
+            user_info.append(f"Localisation : {location_match.group(1).strip()}")
+        
+        # Formater le message final
+        email_body = f"{content}\n\n"
+        if user_info:
+            email_body += "--- Informations du visiteur ---\n" + "\n".join(user_info)
+        
         response = send_email(
-            subject="Demande d'informations",
-            content=f"Message de l'utilisateur:\n\n{user_message}",
+            subject=subject,
+            content=email_body,
             recipient=os.getenv("EMAIL_TO", "contact@imt.sn")
         )
     else:
