@@ -96,16 +96,13 @@ async def on_audio_chunk(chunk):
     pass
 
 @cl.on_audio_end
-async def on_audio_end(elements: list):
+async def on_audio_end():
     """Appelé quand l'enregistrement vocal se termine.
     
-    Args:
-        elements: Liste contenant l'audio transcrit en texte
+    Note : Chainlit transcrit automatiquement l'audio via Web Speech API
+    et envoie le texte transcrit comme message via on_message.
     """
-    if elements:
-        logger.info(f"🎤 Enregistrement vocal terminé ({len(elements)} éléments reçus)")
-    else:
-        logger.info("🎤 Enregistrement vocal terminé (transcription automatique)")
+    logger.info("🎤 Enregistrement vocal terminé (transcription automatique)")
     # Le texte transcrit est automatiquement envoyé comme message via on_message
     pass
 
@@ -216,7 +213,7 @@ async def main(message: cl.Message):
     
     # Créer un bouton TTS (Text-to-Speech) sur le message
     actions = [
-        cl.Action(name="tts", value="speak", label="🔊 Écouter", description="Lire ce message à voix haute")
+        cl.Action(name="tts", payload={"text": response}, label="🔊 Écouter", description="Lire ce message à voix haute")
     ]
     
     await cl.Message(content=response, actions=actions).send()
@@ -224,15 +221,13 @@ async def main(message: cl.Message):
 @cl.action_callback("tts")
 async def on_tts_action(action: cl.Action):
     """Callback pour le bouton TTS - lit le message à voix haute."""
-    # Le message parent contient le texte à lire
-    msg = action.value
+    # Récupérer le texte depuis le payload
+    text = action.payload.get("text", "")
     
     # Envoyer un message audio (nécessite que le navigateur supporte Web Speech API)
     await cl.Message(
-        content="🔊 **Lecture audio en cours...**\n\nVeuillez activer le son de votre navigateur.",
+        content=f"🔊 **Lecture audio en cours...**\n\nTexte : _{text[:100]}..._\n\n⚠️ **Note** : Le TTS côté serveur nécessite une API externe (Google TTS, OpenAI TTS, ElevenLabs).\nActuellement, utilisez la fonction de lecture du navigateur (sélectionnez le texte → clic droit → Lire).",
         author="System"
     ).send()
     
-    # Note : Le vrai TTS nécessite une intégration avec une API externe (Google TTS, ElevenLabs, etc.)
-    # Chainlit ne fournit pas de TTS natif côté serveur
-    logger.info("🔊 Bouton TTS cliqué (TTS backend non implémenté)")
+    logger.info(f"🔊 Bouton TTS cliqué pour texte de {len(text)} caractères")
