@@ -6,6 +6,9 @@ beautifulsoup4
 pytest
 aiomysql
 
+# Automatisation web - Playwright
+playwright>=1.40.0
+
 # LangChain pour orchestration d'agent
 langchain>=1.0.0
 langchain-google-genai>=4.2.0

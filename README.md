@@ -5,14 +5,15 @@ Agent conversationnel **intelligent** pour l'Institut Mines-Télécom Dakar avec
 ## 🎯 Fonctionnalités
 
 ✅ **Agent Intelligent** : Raisonnement autonome avec Gemini + function calling  
-✅ **RAG Vectoriel** : Recherche sémantique avec FAISS + Sentence-Transformers (147 chunks)  
+✅ **RAG Vectoriel** : Recherche sémantique avec FAISS + Sentence-Transformers (139 chunks)  
 ✅ **Multi-LLM** : Cascade Gemini (gratuit) → Grok → OpenAI avec fallback intelligent  
 ✅ **Décision autonome** : L'agent décide lui-même quand utiliser les outils  
 ✅ **Réponse aux questions** : Formations, contact, débouchés, histoire IMT  
 ✅ **Envoi d'emails** : SMTP avec validation robuste (Gmail, Outlook)  
-✅ **Mémoire persistante** : Redis avec entités personnelles (nom, email, profil)  
-✅ **Observabilité** : Langfuse pour traçabilité des appels LLM + coûts  
-✅ **Interface moderne** : Chainlit avec agent LangChain intelligent  
+✅ **Formulaire automatique** : Playwright pour remplir le formulaire de contact web  
+✅ **Mémoire persistante** : Redis (sessions 1h) + MySQL (threads/steps/feedback)  
+✅ **Observabilité** : Langfuse pour traçabilité des appels LLM + coûts actifs  
+✅ **Interface moderne** : Chainlit avec sidebar native (historique conversations)  
 ✅ **Tests complets** : 100% de réussite (4/4 tests agent intelligent)  
 
 ## 📚 Stack Technique
@@ -23,12 +24,14 @@ Agent conversationnel **intelligent** pour l'Institut Mines-Télécom Dakar avec
 | **⚡ Function Calling** | LangChain bind_tools | Décision autonome des outils |
 | **🔄 LLM Fallback 1** | Grok (xAI) | grok-beta ($5/$15 par 1M tokens) |
 | **🔄 LLM Fallback 2** | OpenAI | gpt-4o-mini ($0.15/$0.60 par 1M tokens) |
-| **🔍 RAG Vectoriel** | FAISS + Sentence-Transformers | IndexFlatIP, 147 vecteurs 384D |
+| **🔍 RAG Vectoriel** | FAISS + Sentence-Transformers | IndexFlatIP, 139 vecteurs 384D |
 | **📊 Embeddings** | Sentence-Transformers | paraphrase-multilingual-MiniLM-L12-v2 |
 | **🤖 Orchestration** | LangChain 1.x | Function calling + tools |
 | **💬 Interface** | Chainlit | 2.9.6 |
-| **🧠 Mémoire** | Redis | 7.1.0 (fallback RAM) |
-| **📈 Observabilité** | Langfuse | 3.12.0 (cloud.langfuse.com) |
+| **🌐 Automatisation Web** | Playwright | 1.40.0 (formulaire de contact) |
+| **🧠 Mémoire Court-Terme** | Redis | 5.0.1 (MAX_SESSIONS=3, TTL=1h) |
+| **💾 Mémoire Long-Terme** | MySQL | 5.7.24 (threads/steps/feedback) |
+| **📈 Observabilité** | Langfuse | 3.7.0 (traces actives + coûts) |
 | **🧪 Tests** | pytest | 9.0.2 (4/4 tests intelligents passent) |
 | **🐍 Python** | 3.11 | (Chainlit incompatible 3.13) |
 
@@ -38,31 +41,32 @@ Agent conversationnel **intelligent** pour l'Institut Mines-Télécom Dakar avec
 ┌─────────────────┐
 │  Utilisateur    │
 └────────┬────────┘
-         │
-    ┌────▼─────────────────────────────────┐
-    │      Chainlit Interface              │
+        Chainlit Interface (2.9.6)         │
+    │   + Sidebar native (MySQL)           │
     └────┬─────────────────────────────────┘
          │
-    ┌────▼────────────────────────────────────────────┐
-    │  🧠 Agent Intelligent (LangChain)               │
-    │                                                 │
-    │  ┌────────────────────────────────────────┐   │
-    │  │ Gemini 2.0 (Function Calling)          │   │
-    │  │                                        │   │
-    │  │ 1️⃣ Analyse question                     │   │
-    │  │ 2️⃣ Décide outil (search_imt/send_email)│   │
-    │  │ 3️⃣ Appelle outil si nécessaire         │   │
-    │  │ 4️⃣ Synthétise réponse                  │   │
-    │  └────────────────────────────────────────┘   │
-    │                                                 │
-    │  Cascade fallback si erreur :                  │
-    │  Gemini (gratuit) → Grok → OpenAI → Heuristique│
-    └────┬────────────────────────────────────────────┘
+    ┌────▼────────────────────────────────────────────────┐
+    │  🧠 Agent Intelligent (LangChain)                   │
+    │                                                     │
+    │  ┌────────────────────────────────────────────┐   │
+    │  │ Gemini 2.5 Flash (Function Calling)        │   │
+    │  │                                            │   │
+    │  │ 1️⃣ Analyse question                         │   │
+    │  │ 2️⃣ Décide outil (search/email/formulaire) │   │
+    │  │ 3️⃣ Appelle outil si nécessaire             │   │
+    │  │ 4️⃣ Synthétise réponse                      │   │
+    │  └────────────────────────────────────────────┘   │
+    │                                                     │
+    │  Cascade fallback si erreur :                      │
+    │  Gemini (gratuit) → Grok → OpenAI → Heuristique   │
+    └────┬────────────────────────────────────────────────┘
          │
-    ┌────▼────────────┬──────────────────┬────────────┐
-    │                 │                  │            │
-┌───▼──────────┐ ┌────▼──────────┐ ┌────▼──────┐ ┌──▼────────┐
-│ RAG Search   │ │  Send Email   │ │   Redis   │ │ Langfuse  │
+    ┌────▼──────────┬──────────────┬───────────┬──────────┐
+    │               │              │           │          │
+┌───▼──────────┐ ┌──▼──────┐ ┌────▼────┐ ┌────▼────┐ ┌──▼────────┐
+│ RAG Search   │ │  Email  │ │Formulaire│ │  Redis  │ │ Langfuse  │
+│ FAISS 139vec │ │  SMTP   │ │Playwright│ │+MySQL   │ │Traces+$   │
+└──────────────┘ └─────────┘ └──────────┘ └ Redis   │ │ Langfuse  │
 │ FAISS 147vec │ │  SMTP Gmail   │ │  Memory   │ │  Traces   │
 └──────────────┘ └───────────────┘ └───────────┘ └───────────┘
 ```
@@ -105,8 +109,11 @@ source venv/bin/activate  # macOS/Linux
 # Installer les dépendances
 pip install --upgrade pip
 pip install -r requirements.txt
+Installer les navigateurs Playwright (Chrome, Firefox)
+playwright install
 
 # Construire l'index RAG vectoriel
+python scripts/build_index.py       # Crée chunks.json (139
 python scripts/build_index.py       # Crée chunks.json (147 paragraphes)
 python scripts/build_vector_index.py # Crée embeddings.pkl (384D)
 ```
@@ -137,13 +144,55 @@ USE_LANGCHAIN_AGENT=true  # true = LangChain, false = agent classique
 # === Email SMTP (optionnel) ===
 EMAIL_USER=votre_email@gmail.com
 EMAIL_PASS=mot_de_passe_application  # Voir docs/GUIDE_SMTP.md
-EMAIL_TO=destinataire@example.com
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
+EMAIL_TO=destmémoire court-terme) ===
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# === MySQL (mémoire long-terme) ===
+DATABASE_URL=mysql://root:AMGMySQL@localhost:3306/chainlit
 
 # === Redis (optionnel - fallback RAM) ===
 REDIS_HOST=localhost
 REDIS_PORT=6379
+
+### 4. Vérifier l'installation
+
+```bash
+# Tester RAG vectoriel
+python test_vector_search.py
+
+# Tester agent complet
+python test_agent_rag.py
+
+# Tester formulaire Playwright (optionnel)
+python app/playwright_form.py
+
+# Lancer interface Chainlit
+chainlit run chainlit_app.py
+```
+
+**Accès** : http://localhost:8000
+# Vérifier
+redis-cli ping  # Doit retourner PONG
+```
+
+**MySQL** (mémoire long-terme : threads, steps, feedback) :
+```bash
+# macOS (Homebrew)
+brew install mysql@5.7
+brew services start mysql@5.7
+mysql -u root -p  # Mot de passe : AMGMySQL
+
+# Linux (apt)
+sudo apt-get install mysql-server
+sudo systemctl start mysql
+
+# Créer la base de données
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS chainlit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Initialiser le schéma
+mysql -u root -pAMGMySQL chainlit < scripts/mysql_schema.sql
+```
 ```
 
 📖 **Guides détaillés** :
@@ -155,7 +204,14 @@ REDIS_PORT=6379
 
 ```bash
 # Tester RAG vectoriel
-python test_vector_search.py
+pyt
+
+**Formulaire automatique** :
+```
+Vous : "Remplis le formulaire de contact avec mon email test@example.com"
+Agent : 🧠 Détecte formulaire + email → Appelle Playwright
+→ "Formulaire rempli avec succès sur imt.sn/contact !"
+```hon test_vector_search.py
 
 # Tester agent complet
 python test_agent_rag.py
@@ -233,11 +289,13 @@ Agent : [Envoie l'email et confirme]
 chainlit run chainlit_app.py
 ```
 
-Ouvrir http://localhost:8000 dans votre navigateur.
-
-**Interface graphique** avec :
-- 💬 Chat en temps réel
-- 📜 Historique des conversations
+Ouvrir http://localhost:8000 dans votre navigateemini→Grok→OpenAI)
+│   ├── langchain_agent.py  # Agent LangChain ReAct
+│   ├── langchain_tools.py  # LangChain Tools wrappers
+│   ├── tools.py            # search_imt (RAG) + send_email
+│   ├── vector_search.py    # Moteur RAG (Sentence-Transformers)
+│   ├── playwright_form.py  # 🆕 Automatisation formulaire web
+│   ├── mysql_data_layer.py # 🆕 Persistance MySQL (threads/step
 - 🎨 Interface moderne et responsive
 
 ## 🧪 Tests
@@ -276,12 +334,12 @@ pytest tests/test_tools.py -v
 | [RAPPORT_JOUR0.md](docs/RAPPORT_JOUR0.md) | Préparation et diagnostic initial |
 ## 🛠️ Architecture
 
-```
-imt-agent-clean/
-├── app/
-│   ├── agent.py            # Agent multi-LLM (Grok→OpenAI→Gemini)
-│   ├── langchain_agent.py  # Agent LangChain ReAct
-│   ├── langchain_tools.py  # LangChain Tools wrappers
+```sessions 1h)
+├── data/
+│   ├── chunks.json         # 139 paragraphes indexés
+│   ├── embeddings.pkl      # Embeddings vectoriels (384D)
+│   ├── formations.txt      # 3 filières détaillées (100 lignes)
+│   ├── contact.txt         # km1 Av. Cheikh Anta Diop wrappers
 │   ├── tools.py            # search_imt (RAG vectoriel) + send_email
 │   ├── vector_search.py    # 🆕 Moteur RAG (Sentence-Transformers)
 │   └── __init__.py
@@ -289,9 +347,11 @@ imt-agent-clean/
 │   ├── test_agent.py       # Tests agent classique
 │   ├── test_langchain_agent.py  # Tests LangChain
 │   └── test_tools.py       # Tests outils
-├── memory/
-│   └── redis_memory.py     # Mémoire Redis (fallback RAM)
-├── data/
+├── memory/IMT (regex emails/phones)
+│   ├── build_index.py      # Découpage paragraphes
+│   ├── build_vector_index.py # Génération embeddings
+│   ├── mysql_schema.sql    # 🆕 Schéma MySQL (5 tables)
+│   └── init_mysql.sh       # 🆕 Script d'initialisation MySQL
 │   ├── chunks.json         # 147 paragraphes indexés
 │   ├── embeddings.pkl      # 🆕 Embeddings vectoriels (384D)
 │   ├── formations.txt      # Contenu formations (94 lignes)
@@ -393,11 +453,12 @@ export PYTHONPATH=/path/to/imt-agent-clean:$PYTHONPATH
 - **4/4 tests agent intelligent** (100% passent)
 - **16/18 tâches complètes** (89%)
 - **~2200 lignes** de code (+ agent intelligent)
-- **~1300 lignes** de tests
-- **~2500 lignes** de documentation
-- **Taux de réussite** : >95% (< 30% d'erreur ✅)
-- **Couverture** : ~92%
-
+- *✅ **LangChain** : Agent LangChain avec function calling
+2. ✅ **Langfuse** : Traces actives avec coûts en temps réel
+3. ✅ **RAG avancé** : Embeddings vectoriels FAISS 384D
+4. ✅ **Playwright** : Automatisation formulaire web
+5. ⏳ **Multi-modal** : Support images et PDF
+6. ⏳ **UI personnalisée** : Logo IMT, couleurs institutionnelles
 ## 🤝 Contribution
 
 Ce projet est développé dans le cadre d'un prototype pour l'IMT Sénégal.
@@ -419,18 +480,45 @@ Projet prototype - Usage interne IMT Sénégal
 - **Gemini** pour le LLM
 - **Chainlit** pour l'interface
 - **pytest** pour les tests
-- **Redis** pour la mémoire
+- **Redis** pour6.0 (Jour 5 - Formulaire Web Automatique)  
+**Statut** : 🟢 Production-ready avec Playwright + Langfuse actif
 
----
+### 🎉 Nouvelles Fonctionnalités Jour 5
 
-**Dernière mise à jour** : 26 Janvier 2026  
-**Version** : 0.5.0 (Jour 4 complété - Agent Intelligent)  
-**Statut** : 🟢 Production-ready avec raisonnement autonome Gemini
+- ✅ **Playwright** : Automatisation formulaire de contact sur https://www.imt.sn/contact/
+- ✅ **Langfuse actif** : Traces en temps réel avec tokens + coûts USD
+- ✅ **MySQL persistance** : Threads, steps, feedback (5 tables)
+- ✅ **Redis sessions** : 3 max simultanées, TTL 1h
+- ✅ **README complet** : Installation détaillée (Redis, MySQL, Playwright)
+- ✅ **Données complètes** : km1 Av. Cheikh Anta Diop + 3 filières (139 chunks)
 
-### 🎉 Nouvelles Fonctionnalités Jour 4
+📖 **Documentation** : [docs/AGENT_INTELLIGENT.md](docs/AGENT_INTELLIGENT.md) | [docs/RAPPORT_JOUR4.md](docs/RAPPORT_JOUR4.md)
 
-- ✅ **Agent intelligent** avec function calling Gemini
-- ✅ **Décision autonome** des outils (plus de keywords hardcodés)
+### 🌐 Utilisation du Formulaire Automatique
+
+**Commandes acceptées** :
+```
+"Remplis le formulaire de contact"
+"Je veux remplir le formulaire avec mon email test@example.com"
+"Formulaire: je m'appelle Ali, email ali@test.com, sujet: Demande info"
+```
+
+**Extraction automatique** :
+- **Nom** : Détecté depuis la conversation ou extrait du message
+- **Email** : Regex `[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}`
+- **Téléphone** : Format Sénégal `+221 XX XXX XX XX` (optionnel)
+- **Sujet** : Après "sujet:", "objet:", "à propos de"
+- **Message** : Corps du message ou contenu après "message:"
+
+**Fonctionnement** :
+1. Agent détecte les mots-clés : "formulaire", "remplis", "remplir"
+2. Extrait les données du message utilisateur
+3. Lance Playwright en mode headless (Chrome)
+4. Remplit automatiquement les champs sur https://www.imt.sn/contact/
+5. Soumet le formulaire et attend confirmation
+6. Retourne "Formulaire rempli avec succès !" ou message d'erreur alternatif
+
+**Fallback** : Si Playwright échoue → message avec coordonnées directes (contact@imt.sn, +221 33 859 73 73
 - ✅ **Cascade optimisée** : Gemini gratuit → Grok → OpenAI
 - ✅ **Tracking coûts** : Tokens + USD pour tous les LLMs
 - ✅ **Taux de réussite >95%** : Largement sous les 30% d'erreur demandés

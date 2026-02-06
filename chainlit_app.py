@@ -155,17 +155,18 @@ async def main(message: cl.Message):
     if session_id:
         memory.add_message(session_id, "user", user_message)
     
-    # Détecter si c'est une demande d'envoi d'email avec extraction objet/contenu
+    # Détecter si c'est une demande d'envoi (email OU formulaire)
     query_lower = user_message.lower()
     
     # Mots-clés forts indiquant une action d'envoi
-    send_keywords = ["contacte", "envoie", "envoyer", "écris", "ecris", "transmet", "transmets", "mail", "email"]
+    send_keywords = ["contacte", "envoie", "envoyer", "écris", "ecris", "transmet", "transmets", "mail", "email", "formulaire", "remplis", "remplir"]
     # Mots-clés de questions (pas d'action)
     question_keywords = ["comment contacter", "où contacter", "quel est le contact", "comment envoyer"]
     
     # Vérifier si c'est une vraie demande d'action
     is_send_request = any(kw in query_lower for kw in send_keywords)
     is_question = any(kw in query_lower for kw in question_keywords)
+    is_form_request = any(kw in query_lower for kw in ["formulaire", "remplis", "remplir"])
     
     if is_send_request and not is_question:
         # Extraire l'objet personnalisé (après "objet:", "sujet:", ou entre guillemets)
@@ -185,19 +186,55 @@ async def main(message: cl.Message):
             # Si objet trouvé, le reste est le contenu
             content = user_message.replace(objet_match.group(0), "").strip()
         
-        # Extraire les informations utilisateur (nom, localisation)
+        # Extraire les informations utilisateur (nom, email, localisation, téléphone)
         user_info = []
+        name = "Visiteur du site"
+        email_user = None
+        phone = None
+        
         name_match = re.search(r'(?:je m\'appelle|mon nom est|je suis)\s+([A-ZÀ-ÿa-z\s]+)', user_message, re.IGNORECASE)
         if name_match:
-            user_info.append(f"Nom : {name_match.group(1).strip()}")
+            name = name_match.group(1).strip()
+            user_info.append(f"Nom : {name}")
+        
+        email_match = re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', user_message)
+        if email_match:
+            email_user = email_match.group(0)
+            user_info.append(f"Email : {email_user}")
+        
+        phone_match = re.search(r'(?:\+221|00221)?\s*\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}', user_message)
+        if phone_match:
+            phone = phone_match.group(0)
+            user_info.append(f"Téléphone : {phone}")
         
         location_match = re.search(r'(?:je vis|j\'habite|réside|viens de)\s+(?:à|au|en)\s+([A-ZÀ-ÿa-z\s]+)', user_message, re.IGNORECASE)
         if location_match:
             user_info.append(f"Localisation : {location_match.group(1).strip()}")
         
-        # Formater le message final
-        email_body = f"{content}\n\n"
-        if user_info:
+        # Décider entre formulaire ou email
+        if is_form_request and email_user:
+            # Utiliser Playwright pour remplir le formulaire
+            logger.info("🌐 Utilisation du formulaire web Playwright")
+            from app.playwright_form import fill_contact_form
+            response = fill_contact_form(
+                name=name,
+                email=email_user,
+                subject=subject,
+                message=content,
+                phone=phone
+            )
+        else:
+            # Utiliser l'envoi d'email classique
+            logger.info("📧 Utilisation de l'envoi d'email SMTP")
+            email_body = f"{content}\n\n"
+            if user_info:
+                email_body += "--- Informations du visiteur ---\n" + "\n".join(user_info)
+            
+            response = send_email(
+                subject=subject,
+                content=email_body,
+                recipient=os.getenv("EMAIL_TO", "contact@imt.sn")
+            )
             email_body += "--- Informations du visiteur ---\n" + "\n".join(user_info)
         
         response = send_email(
