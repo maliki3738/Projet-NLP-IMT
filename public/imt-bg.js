@@ -282,12 +282,7 @@
       placeholder = document.createElement('div');
       placeholder.id = 'imt-history-placeholder';
       placeholder.className = 'imt-history-placeholder';
-      placeholder.innerHTML = `
-        <div class="imt-history-placeholder__title">Historique des conversations</div>
-        <div class="imt-history-placeholder__body">
-          Les discussions recentes s'affichent ici.
-        </div>
-      `;
+      placeholder.innerHTML = ``;
       const header = sidebar.querySelector('header');
       const target = findHistoryAnchor(sidebar);
       if (header && header.parentElement === sidebar) {
