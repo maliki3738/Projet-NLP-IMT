@@ -72,6 +72,10 @@ class MySQLDataLayer(BaseDataLayer):
             db=(url.path or "/").lstrip("/") or "chainlit",
             autocommit=True,
             cursorclass=aiomysql.DictCursor,
+            minsize=1,
+            maxsize=5,
+            pool_recycle=3600,
+            echo=False,
         )
 
     async def execute(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:

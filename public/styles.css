@@ -341,6 +341,9 @@ header {
 img[alt*="avatar" i] {
   border-radius: 999px;
   box-shadow: 0 0 22px rgba(0, 210, 255, 0.55);
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
 }
 
 .imt-brain-pulse {
@@ -393,22 +396,6 @@ img[alt*="avatar" i] {
     transition: none !important;
   }
   #imt-cursor-halo { display: none; }
-}
-
-/* Logo centered until first message appears */
-body:not(:has([data-message])) img[src*="imt-bot.svg"],
-body:not(:has([data-message])) img[alt*="logo" i] {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: 180px;
-  height: 180px;
-  z-index: 3;
-}
-
-body:not(:has([data-message])) header img[src*="imt-bot.svg"],
-body:not(:has([data-message])) header img[alt*="logo" i] {
-  opacity: 0;
 }
 
 /* Boutons GitHub et Langfuse - Style compact */
