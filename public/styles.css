@@ -4,47 +4,73 @@
   --font-sans: "Space Grotesk", "Sora", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
 
-  --imt-void: 222 48% 5%;
-  --imt-ink: 215 40% 7%;
+  --imt-void: 210 30% 98%;
+  --imt-ink: 210 20% 95%;
   --imt-cyan: 188 92% 49%;
   --imt-blue: 213 85% 55%;
   --imt-teal: 171 70% 40%;
   --imt-gold: 42 85% 60%;
 
+  --background: 210 30% 98%;
+  --foreground: 210 20% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 20% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 20% 12%;
+  --primary: var(--imt-cyan);
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 20% 94%;
+  --secondary-foreground: 210 20% 12%;
+  --muted: 210 18% 92%;
+  --muted-foreground: 210 10% 40%;
+  --accent: 210 18% 92%;
+  --accent-foreground: 210 20% 12%;
+  --destructive: 0 70% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 18% 86%;
+  --input: 210 18% 86%;
+  --ring: 210 20% 20%;
+  --radius: 0.9rem;
+
+  --sidebar-background: 210 30% 97%;
+  --sidebar-foreground: 210 20% 12%;
+  --sidebar-primary: 193 92% 47%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 18% 94%;
+  --sidebar-accent-foreground: 210 20% 12%;
+  --sidebar-border: 210 18% 86%;
+  --sidebar-ring: 210 20% 20%;
+
+  --app-bg: radial-gradient(1200px 800px at 10% -10%, rgba(10, 132, 255, 0.08), transparent 60%),
+            linear-gradient(180deg, hsl(var(--imt-void)) 0%, hsl(var(--imt-ink)) 100%);
+}
+
+.dark {
+  --imt-void: 222 48% 5%;
+  --imt-ink: 215 40% 7%;
   --background: 220 40% 6%;
   --foreground: 210 20% 96%;
   --card: 220 36% 10%;
   --card-foreground: 210 20% 96%;
   --popover: 220 36% 10%;
   --popover-foreground: 210 20% 96%;
-  --primary: var(--imt-cyan);
-  --primary-foreground: 0 0% 100%;
   --secondary: 220 22% 16%;
   --secondary-foreground: 210 20% 96%;
   --muted: 220 16% 18%;
   --muted-foreground: 210 10% 70%;
   --accent: 210 18% 20%;
   --accent-foreground: 210 20% 96%;
-  --destructive: 0 70% 45%;
-  --destructive-foreground: 0 0% 100%;
   --border: 220 18% 20%;
   --input: 220 18% 20%;
   --ring: var(--imt-cyan);
-  --radius: 0.9rem;
-
   --sidebar-background: 220 42% 8%;
   --sidebar-foreground: 210 30% 92%;
-  --sidebar-primary: 193 92% 47%;
-  --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 220 28% 14%;
   --sidebar-accent-foreground: 210 20% 96%;
   --sidebar-border: 220 24% 18%;
   --sidebar-ring: var(--imt-cyan);
-}
-
-.dark {
-  --background: 220 40% 6%;
-  --foreground: 210 20% 96%;
+  --app-bg: radial-gradient(1200px 800px at 10% -10%, rgba(10, 132, 255, 0.18), transparent 60%),
+            linear-gradient(180deg, hsl(var(--imt-void)) 0%, hsl(var(--imt-ink)) 100%);
 }
 
 html, body, #root {
@@ -54,7 +80,7 @@ html, body, #root {
 body {
   font-family: var(--font-sans);
   color: hsl(var(--foreground));
-  background: radial-gradient(1200px 800px at 10% -10%, rgba(10, 132, 255, 0.18), transparent 60%);
+  background: var(--app-bg);
   overflow: hidden;
 }
 
@@ -278,6 +304,21 @@ pre, code {
 .cl-message,
 [data-message] {
   border-radius: 16px;
+  animation: message-in 0.25s ease both;
+}
+
+header {
+  animation: header-fade 0.3s ease both;
+}
+
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes header-fade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .message.assistant,
@@ -354,26 +395,18 @@ img[alt*="avatar" i] {
   #imt-cursor-halo { display: none; }
 }
 
-/* Force-hide sidebar + toggle (remove history from UI) */
-aside,
-.sidebar,
-.cl-sidebar,
-[data-side],
-[data-testid*="sidebar" i],
-[data-testid*="history" i],
-[data-testid*="thread" i] {
-  display: none !important;
-  visibility: hidden !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
+/* Logo centered until first message appears */
+body:not(:has([data-message])) img[src*="imt-bot.svg"],
+body:not(:has([data-message])) img[alt*="logo" i] {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: 180px;
+  height: 180px;
+  z-index: 3;
 }
 
-button[aria-label*="sidebar" i],
-button[aria-label*="toggle" i],
-[data-testid*="sidebar" i] button {
-  display: none !important;
+body:not(:has([data-message])) header img[src*="imt-bot.svg"],
+body:not(:has([data-message])) header img[alt*="logo" i] {
+  opacity: 0;
 }
