@@ -410,3 +410,48 @@ body:not(:has([data-message])) header img[src*="imt-bot.svg"],
 body:not(:has([data-message])) header img[alt*="logo" i] {
   opacity: 0;
 }
+
+/* Boutons GitHub et Langfuse - Style compact */
+.imt-custom-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  height: 36px;
+  padding: 0 12px;
+  flex: 1;
+  cursor: pointer;
+  
+  /* Style bouton Chainlit par défaut */
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.imt-custom-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  opacity: 0.9;
+}
+
+.imt-custom-button:active {
+  transform: scale(0.98);
+}
+
+.imt-custom-button img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.imt-custom-button span {
+  font-size: 13px;
+  font-weight: 500;
+}

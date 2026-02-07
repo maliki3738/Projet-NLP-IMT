@@ -294,6 +294,38 @@
       }
     }
 
+    // Ajouter les boutons GitHub et Langfuse
+    const newChatButton = sidebar.querySelector('button[data-testid*="new" i], button[aria-label*="new" i], header button');
+    
+    if (newChatButton && !document.getElementById('imt-github-button')) {
+      // Copier les classes du bouton Nouvelle discussion
+      const buttonClasses = newChatButton.className;
+      
+      // Bouton GitHub
+      const githubBtn = document.createElement('button');
+      githubBtn.id = 'imt-github-button';
+      githubBtn.className = buttonClasses;
+      githubBtn.innerHTML = `
+        <img src="/public/github.png" alt="GitHub" style="width: 20px; height: 20px; filter: brightness(0) invert(1);" />
+        <span>GitHub</span>
+      `;
+      githubBtn.onclick = () => window.open('https://github.com/maliki3738/Projet-NLP-IMT', '_blank');
+      
+      // Bouton Langfuse
+      const langfuseBtn = document.createElement('button');
+      langfuseBtn.id = 'imt-langfuse-button';
+      langfuseBtn.className = buttonClasses;
+      langfuseBtn.innerHTML = `
+        <img src="/public/langfuse.png" alt="Langfuse" style="width: 20px; height: 20px; filter: brightness(0) invert(1);" />
+        <span>Langfuse</span>
+      `;
+      langfuseBtn.onclick = () => window.open('https://cloud.langfuse.com/project/cml9pn5ld0014ad08qdq7m2gz', '_blank');
+      
+      // Insérer les boutons juste après le bouton Nouvelle discussion
+      newChatButton.insertAdjacentElement('afterend', githubBtn);
+      githubBtn.insertAdjacentElement('afterend', langfuseBtn);
+    }
+
     const hasItems = Boolean(
       sidebar.querySelector('[data-testid*="history" i] li, [data-testid*="sidebar" i] li')
     );
