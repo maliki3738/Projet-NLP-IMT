@@ -8,7 +8,7 @@ print("TEST DU SYSTÈME DE DÉTECTION DE CONTENU INAPPROPRIÉ")
 print("=" * 60)
 
 # Test 1 : Comparaisons
-print("\n🔍 Test 1 : Comparaisons avec autres écoles")
+print("\nTest 1 : Comparaisons avec autres écoles")
 print("-" * 60)
 comparisons = [
     "IMT est meilleure que ESP",
@@ -18,11 +18,11 @@ comparisons = [
 ]
 for q in comparisons:
     result = _detect_inappropriate_content(q)
-    status = "✅ BLOQUÉ" if result else "❌ RATÉ"
+    status = "BLOQUÉ" if result else "RATÉ"
     print(f"{status} : {q}")
 
 # Test 2 : Insultes
-print("\n🔍 Test 2 : Insultes et dénigrement")
+print("\nTest 2 : Insultes et dénigrement")
 print("-" * 60)
 insults = [
     "Votre école est nulle",
@@ -32,11 +32,11 @@ insults = [
 ]
 for q in insults:
     result = _detect_inappropriate_content(q)
-    status = "✅ BLOQUÉ" if result else "❌ RATÉ"
+    status = "BLOQUÉ" if result else "RATÉ"
     print(f"{status} : {q}")
 
 # Test 3 : Propos offensants
-print("\n🔍 Test 3 : Propos offensants")
+print("\nTest 3 : Propos offensants")
 print("-" * 60)
 offensive = [
     "ferme ta gueule",
@@ -45,11 +45,11 @@ offensive = [
 ]
 for q in offensive:
     result = _detect_inappropriate_content(q)
-    status = "✅ BLOQUÉ" if result else "❌ RATÉ"
+    status = "BLOQUÉ" if result else "RATÉ"
     print(f"{status} : {q}")
 
 # Test 4 : Questions normales (doivent PASSER)
-print("\n🔍 Test 4 : Questions normales (doivent PASSER)")
+print("\nTest 4 : Questions normales (doivent PASSER)")
 print("-" * 60)
 normal = [
     "Quelles sont les formations disponibles?",
@@ -59,11 +59,11 @@ normal = [
 ]
 for q in normal:
     result = _detect_inappropriate_content(q)
-    status = "✅ PASSÉ" if not result else "❌ BLOQUÉ À TORT"
+    status = "PASSÉ" if not result else "BLOQUÉ À TORT"
     print(f"{status} : {q}")
 
 # Test 5 : Afficher un message de refus exemple
-print("\n📋 Exemple de message de refus (comparaison):")
+print("\nExemple de message de refus (comparaison):")
 print("-" * 60)
 example = _detect_inappropriate_content("IMT est meilleure que ESP")
 if example:

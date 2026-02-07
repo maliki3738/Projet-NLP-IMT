@@ -38,7 +38,7 @@ def search_imt(query: str) -> str:
     Returns:
         Les informations trouvées dans la base de connaissances
     """
-    logger.info(f"🔍 Outil search_imt appelé avec: {query[:50]}...")
+    logger.info(f"Outil search_imt appelé avec: {query[:50]}...")
     return _search_imt_original(query)
 
 @tool
@@ -58,7 +58,7 @@ def send_email(subject: str, content: str, recipient: Optional[str] = None) -> s
     Returns:
         Confirmation d'envoi ou erreur
     """
-    logger.info(f"📧 Outil send_email appelé: {subject}")
+    logger.info(f"Outil send_email appelé: {subject}")
     return _send_email_original(subject, content, recipient)
 
 # Liste des outils disponibles
@@ -116,7 +116,7 @@ def create_imt_agent(temperature: float = 0.3, verbose: bool = False):
     if not api_key:
         raise ValueError("GEMINI_API_KEY ou GOOGLE_API_KEY manquante dans .env")
     
-    logger.info("✅ Initialisation agent LangChain INTELLIGENT avec Gemini")
+    logger.info("Initialisation agent LangChain INTELLIGENT avec Gemini")
     
     # Créer le LLM
     llm = ChatGoogleGenerativeAI(
@@ -185,7 +185,7 @@ def run_agent(question: str, agent: Optional[ChatGoogleGenerativeAI] = None,
             
             if not tool_calls:
                 # Pas d'outil à appeler → réponse finale
-                logger.info(f"✅ Réponse finale générée ({len(response.content)} caractères)")
+                logger.info(f"Réponse finale générée ({len(response.content)} caractères)")
                 return response.content.strip()
             
             # Gemini veut appeler des outils
@@ -218,14 +218,14 @@ def run_agent(question: str, agent: Optional[ChatGoogleGenerativeAI] = None,
                     )
                 )
                 
-                logger.info(f"✅ Résultat outil: {str(tool_result)[:100]}...")
+                logger.info(f"Résultat outil: {str(tool_result)[:100]}...")
         
         # Si on sort de la boucle sans réponse finale
-        logger.warning(f"⚠️  Max iterations atteint ({max_iterations})")
+        logger.warning(f" Max iterations atteint ({max_iterations})")
         return "Désolé, je n'ai pas pu terminer le traitement de votre question."
         
     except Exception as e:
-        logger.error(f"❌ Erreur agent: {e}", exc_info=True)
+        logger.error(f"Erreur agent: {e}", exc_info=True)
         return f"Désolé, une erreur s'est produite : {str(e)}"
 
 

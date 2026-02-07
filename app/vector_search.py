@@ -17,7 +17,7 @@ DATA_DIR = Path("data")
 EMBEDDINGS_FILE = DATA_DIR / "embeddings.pkl"
 FAISS_INDEX_FILE = DATA_DIR / "faiss.index"
 
-# ✅ CHARGER SENTENCETRANSFORMER UNE SEULE FOIS (FIX SEGFAULT macOS)
+# CHARGER SENTENCETRANSFORMER UNE SEULE FOIS (FIX SEGFAULT macOS)
 # Ne jamais recréer le modèle pendant l'exécution
 _EMBEDDING_MODEL = None
 
@@ -31,7 +31,7 @@ def get_embedding_model():
             device="cpu"
         )
         _EMBEDDING_MODEL.encode("test", show_progress_bar=False)  # Warmup
-        logger.info("✅ Modèle d'embeddings chargé")
+        logger.info("Modèle d'embeddings chargé")
     return _EMBEDDING_MODEL
 
 class VectorSearch:
@@ -49,13 +49,13 @@ class VectorSearch:
         # Vérifier les fichiers
         if not FAISS_INDEX_FILE.exists():
             raise FileNotFoundError(
-                f"❌ Index FAISS introuvable : {FAISS_INDEX_FILE}\n"
+                f"Index FAISS introuvable : {FAISS_INDEX_FILE}\n"
                 "Exécutez d'abord : python scripts/build_vector_index.py"
             )
         
         if not EMBEDDINGS_FILE.exists():
             raise FileNotFoundError(
-                f"❌ Métadonnées introuvables : {EMBEDDINGS_FILE}\n"
+                f"Métadonnées introuvables : {EMBEDDINGS_FILE}\n"
                 "Exécutez d'abord : python scripts/build_vector_index.py"
             )
         
@@ -63,7 +63,7 @@ class VectorSearch:
         try:
             self.index = faiss.read_index(str(FAISS_INDEX_FILE))
         except Exception as e:
-            logger.error(f"❌ Erreur chargement FAISS: {e}")
+            logger.error(f"Erreur chargement FAISS: {e}")
             raise
         
         # Charger les métadonnées
@@ -72,10 +72,10 @@ class VectorSearch:
         
         self.chunks = metadata['chunks']
         
-        # ✅ Utiliser le modèle global (pas de recréation)
+        # Utiliser le modèle global (pas de recréation)
         self.model = get_embedding_model()
         
-        print(f"✅ Index FAISS chargé : {len(self.chunks)} chunks (IndexFlatIP)")
+        print(f"Index FAISS chargé : {len(self.chunks)} chunks (IndexFlatIP)")
     
     def search(self, query: str, top_k: int = 3) -> List[Dict]:
         """
@@ -110,7 +110,7 @@ class VectorSearch:
             
             return results
         except Exception as e:
-            logger.error(f"❌ Erreur FAISS search: {e}")
+            logger.error(f"Erreur FAISS search: {e}")
             return []  # Retourner liste vide plutôt que crasher
     
     def get_best_paragraph(self, query: str) -> tuple:

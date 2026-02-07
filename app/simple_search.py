@@ -56,7 +56,7 @@ def load_documents() -> Dict[str, str]:
         except Exception as e:
             logger.warning(f"Impossible de lire {file.name}: {e}")
     
-    logger.info(f"✅ {len(documents)} documents chargés")
+    logger.info(f"{len(documents)} documents chargés")
     return documents
 
 
@@ -84,7 +84,7 @@ def route_query(query: str) -> List[str]:
     
     # Retourner top 3 fichiers
     result = [file for file, _ in sorted_files[:3]]
-    logger.info(f"🎯 Routing: {query[:50]}... → {result}")
+    logger.info(f"Routing: {query[:50]}... → {result}")
     return result
 
 
@@ -228,12 +228,12 @@ def simple_search_imt(query: str) -> str:
         context = "\n\n===\n\n".join(context_parts)
         
         best = results[0]
-        logger.info(f"✅ Meilleur résultat: {best['source']} (score: {best['score']:.2f})")
+        logger.info(f"Meilleur résultat: {best['source']} (score: {best['score']:.2f})")
         
         return context
         
     except Exception as e:
-        logger.error(f"❌ Erreur recherche: {e}")
+        logger.error(f"Erreur recherche: {e}")
         return ""
 
 

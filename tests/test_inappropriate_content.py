@@ -56,10 +56,10 @@ for name, question, should_block in test_cases:
     ])
     
     if is_blocked == should_block:
-        status = "✅ PASS"
+        status = "PASS"
         passed += 1
     else:
-        status = "❌ FAIL"
+        status = "FAIL"
         failed += 1
     
     expected = "BLOQUÉ" if should_block else "PASSÉ"
@@ -68,7 +68,7 @@ for name, question, should_block in test_cases:
     print(f"\n{status} [{name}]")
     print(f"  Question: {question}")
     print(f"  Attendu: {expected} | Obtenu: {actual}")
-    if status == "❌ FAIL":
+    if status == "FAIL":
         print(f"  Réponse: {response[:100]}...")
 
 print("\n" + "=" * 70)

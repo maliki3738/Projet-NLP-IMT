@@ -15,11 +15,11 @@ try:
     from app.simple_search import simple_search_imt as _simple_search
     SIMPLE_SEARCH_AVAILABLE = True
     logger = logging.getLogger(__name__)
-    logger.info("✅ Recherche simple chargée (sans FAISS)")
+    logger.info("Recherche simple chargée (sans FAISS)")
 except ImportError as e:
     SIMPLE_SEARCH_AVAILABLE = False
     logger = logging.getLogger(__name__)
-    logger.warning(f"⚠️ Recherche simple non disponible: {e}")
+    logger.warning(f"Recherche simple non disponible: {e}")
 
 # Configuration du logging
 logger = logging.getLogger(__name__)
@@ -47,13 +47,13 @@ def search_imt(query: str) -> str:
         try:
             context = _simple_search(query)
             if context:
-                logger.info(f"✅ Contexte trouvé ({len(context)} caractères)")
+                logger.info(f"Contexte trouvé ({len(context)} caractères)")
                 return context
             else:
                 logger.warning("Aucun résultat trouvé")
                 return "Je n'ai pas trouvé d'information pertinente sur cette question."
         except Exception as e:
-            logger.error(f"❌ Erreur recherche simple: {e}")
+            logger.error(f"Erreur recherche simple: {e}")
             return "Désolé, une erreur s'est produite lors de la recherche."
     
     return "Service de recherche indisponible."
@@ -140,12 +140,12 @@ def send_email(
             logger.info(f"Email programmé pour {scheduled_dt.strftime('%Y-%m-%d %H:%M')} (dans {delay_str})")
             
             return (
-                f"⏰ EMAIL PROGRAMMÉ\n"
+                f"EMAIL PROGRAMMÉ\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"📅 Date : {scheduled_dt.strftime('%d/%m/%Y à %H:%M')}\n"
-                f"⏱️  Dans : {delay_str}\n"
-                f"📩 Sujet : {subject}\n"
-                f"📧 Destinataire : {recipient or os.getenv('EMAIL_TO', 'par défaut')}\n"
+                f" Dans : {delay_str}\n"
+                f"Sujet : {subject}\n"
+                f"Destinataire : {recipient or os.getenv('EMAIL_TO', 'par défaut')}\n"
                 f"\n"
                 f"Note : L'email sera envoyé automatiquement à l'heure programmée."
             )
@@ -175,7 +175,7 @@ def send_email(
     if not email_user or not email_pass:
         logger.info("Mode simulation - pas de configuration SMTP")
         return (
-            "📧 EMAIL NON ENVOYÉ (simulation)\n"
+            "EMAIL NON ENVOYÉ (simulation)\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "Raison : Aucune configuration SMTP détectée.\n"
             "\n"
@@ -184,7 +184,7 @@ def send_email(
             "  EMAIL_PASS=votre_mot_de_passe_application\n"
             "  EMAIL_TO=destinataire@example.com\n"
             "\n"
-            f"📩 Sujet : {subject}\n"
+            f"Sujet : {subject}\n"
             f"📝 Contenu : {content[:100]}{'...' if len(content) > 100 else ''}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         )
@@ -240,17 +240,17 @@ def send_email(
         logger.debug("Connexion SMTP fermée")
         
         return (
-            f"✅ EMAIL ENVOYÉ AVEC SUCCÈS\n"
+            f"EMAIL ENVOYÉ AVEC SUCCÈS\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📧 Destinataire : {email_to}\n"
-            f"📩 Sujet : {subject}\n"
-            f"✓ Serveur SMTP : {smtp_host}:{smtp_port}"
+            f"Destinataire : {email_to}\n"
+            f"Sujet : {subject}\n"
+            f"Serveur SMTP : {smtp_host}:{smtp_port}"
         )
         
     except smtplib.SMTPAuthenticationError as e:
         logger.error(f"Erreur d'authentification SMTP: {e}")
         return (
-            f"❌ ERREUR D'AUTHENTIFICATION\n"
+            f"ERREUR D'AUTHENTIFICATION\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"Impossible de se connecter au serveur SMTP.\n"
             f"\n"
@@ -265,7 +265,7 @@ def send_email(
     except smtplib.SMTPConnectError as e:
         logger.error(f"Erreur de connexion SMTP: {e}")
         return (
-            f"❌ ERREUR DE CONNEXION\n"
+            f"ERREUR DE CONNEXION\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"Impossible de se connecter au serveur {smtp_host}:{smtp_port}\n"
             f"\n"
@@ -275,12 +275,12 @@ def send_email(
         
     except smtplib.SMTPException as e:
         logger.error(f"Erreur SMTP: {e}")
-        return f"❌ Erreur SMTP : {str(e)}"
+        return f"Erreur SMTP : {str(e)}"
         
     except ConnectionRefusedError:
         logger.error(f"Connexion refusée par {smtp_host}:{smtp_port}")
         return (
-            f"❌ CONNEXION REFUSÉE\n"
+            f"CONNEXION REFUSÉE\n"
             f"Le serveur {smtp_host}:{smtp_port} refuse la connexion.\n"
             f"Vérifiez le host et le port dans votre configuration."
         )
@@ -288,11 +288,11 @@ def send_email(
     except TimeoutError:
         logger.error(f"Timeout connexion SMTP vers {smtp_host}:{smtp_port}")
         return (
-            f"❌ TIMEOUT\n"
+            f"TIMEOUT\n"
             f"La connexion au serveur {smtp_host}:{smtp_port} a expiré.\n"
             f"Vérifiez votre connexion internet ou essayez plus tard."
         )
         
     except Exception as e:
         logger.error(f"Erreur inattendue lors de l'envoi email: {e}", exc_info=True)
-        return f"❌ Erreur inattendue : {str(e)}"
+        return f"Erreur inattendue : {str(e)}"

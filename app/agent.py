@@ -29,10 +29,10 @@ if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
         )
         LANGFUSE_AVAILABLE = True
         logger = logging.getLogger(__name__)
-        logger.info("✅ Langfuse configuré avec succès")
+        logger.info("Langfuse configuré avec succès")
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.warning(f"⚠️ Langfuse non disponible : {e}")
+        logger.warning(f"Langfuse non disponible : {e}")
 else:
     logger = logging.getLogger(__name__)
     logger.debug("Langfuse désactivé (pas de clés configurées)")
@@ -68,13 +68,13 @@ try:
         response = requests.get(test_url, timeout=5)
         if response.status_code == 200:
             GENAI_AVAILABLE = True
-            logger.info("✅ Gemini API REST configuré avec succès")
+            logger.info("Gemini API REST configuré avec succès")
         else:
-            logger.warning(f"⚠️ Clé API Gemini invalide (status {response.status_code})")
+            logger.warning(f"Clé API Gemini invalide (status {response.status_code})")
     else:
-        logger.warning("⚠️ Clé API Gemini manquante - Fallback heuristique activé")
+        logger.warning("Clé API Gemini manquante - Fallback heuristique activé")
 except Exception as e:
-    logger.warning(f"⚠️ Gemini non disponible : {e} - Fallback heuristique activé")
+    logger.warning(f"Gemini non disponible : {e} - Fallback heuristique activé")
 
 # Tentative d'import Grok/xAI comme alternative
 GROK_AVAILABLE = False
@@ -88,9 +88,9 @@ try:
             base_url="https://api.x.ai/v1"
         )
         GROK_AVAILABLE = True
-        logger.info("✅ Grok (xAI) configuré avec succès")
+        logger.info("Grok (xAI) configuré avec succès")
 except Exception as e:
-    logger.info(f"💡 Grok non disponible : {e}")
+    logger.info(f"Grok non disponible : {e}")
 
 # Configuration OpenAI GPT (fallback économique)
 OPENAI_AVAILABLE = False
@@ -101,9 +101,9 @@ try:
     if OPENAI_API_KEY:
         openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
         OPENAI_AVAILABLE = True
-        logger.info("✅ OpenAI GPT configuré avec succès")
+        logger.info("OpenAI GPT configuré avec succès")
 except Exception as e:
-    logger.info(f"💡 OpenAI non disponible : {e}")
+    logger.info(f"OpenAI non disponible : {e}")
 
 # Flag global pour tracker si tous les LLMs ont échoué (éviter de les rappeler)
 _all_llms_failed = False
@@ -243,7 +243,7 @@ def _call_openai(prompt: str, max_tokens: int = 200) -> Optional[str]:
 def _call_gemini(prompt: str) -> Optional[str]:
     """Appelle les LLMs disponibles avec ordre de priorité intelligent.
     
-    ✨ NOUVEL ORDRE : Gemini (gratuit) → Grok → OpenAI → None
+    NOUVEL ORDRE : Gemini (gratuit) → Grok → OpenAI → None
     
     Gemini en priorité car :
     - Free tier : 15 req/min, 1500 req/jour
@@ -261,30 +261,30 @@ def _call_gemini(prompt: str) -> Optional[str]:
     
     # ⭐ PRIORITÉ 1 : Essayer Gemini (GRATUIT)
     if GENAI_AVAILABLE:
-        logger.debug("🥇 Tentative Gemini (priorité 1)...")
+        logger.debug("Tentative Gemini (priorité 1)...")
         result = _call_gemini_direct(prompt)
         if result:
-            logger.info("✅ Gemini a répondu")
+            logger.info("Gemini a répondu")
             return result
-        logger.info("🔄 Gemini échoué, fallback vers Grok...")
+        logger.info("Gemini échoué, fallback vers Grok...")
     
     # Priorité 2 : Essayer Grok
     if GROK_AVAILABLE:
-        logger.debug("🥈 Tentative Grok (priorité 2)...")
+        logger.debug("Tentative Grok (priorité 2)...")
         result = _call_grok(prompt, max_tokens=150)
         if result:
-            logger.info("✅ Grok a répondu")
+            logger.info("Grok a répondu")
             return result
-        logger.info("🔄 Grok échoué, fallback vers OpenAI...")
+        logger.info("Grok échoué, fallback vers OpenAI...")
     
     # Priorité 3 : Essayer OpenAI (économique mais payant)
     if OPENAI_AVAILABLE:
-        logger.debug("🥉 Tentative OpenAI (priorité 3)...")
+        logger.debug("Tentative OpenAI (priorité 3)...")
         result = _call_openai(prompt, max_tokens=200)
         if result:
-            logger.info("✅ OpenAI a répondu")
+            logger.info("OpenAI a répondu")
             return result
-        logger.info("❌ OpenAI échoué, aucun LLM disponible")
+        logger.info("OpenAI échoué, aucun LLM disponible")
     
     # Tous les LLM ont échoué - setter le flag pour éviter de les rappeler
     logger.debug("Tous les LLM ont échoué, retour None")
@@ -340,7 +340,7 @@ def _call_gemini_direct(prompt: str) -> Optional[str]:
                 input_tokens = usage.get('promptTokenCount', 0)
                 output_tokens = usage.get('candidatesTokenCount', 0)
                 
-                logger.info(f"📊 Tokens: {input_tokens} input, {output_tokens} output")
+                logger.info(f"Tokens: {input_tokens} input, {output_tokens} output")
                 
                 # Créer un événement simple
                 langfuse_client.create_event(
@@ -435,29 +435,29 @@ def _answer_personal_question(question: str, entities: dict) -> str:
     # Questions sur le nom
     if any(phrase in q_lower for phrase in ["je m'appelle", "mon nom", "comment je", "qui suis-je", "appelle comment"]):
         if 'name' in entities:
-            return f"👤 Vous vous appelez **{entities['name']}**."
+            return f"Vous vous appelez **{entities['name']}**."
         else:
             return "Je ne connais pas encore votre nom. Vous pouvez me le dire en disant 'Je m'appelle [votre nom]'."
     
     # Questions sur le profil
     if any(phrase in q_lower for phrase in ["qui suis-je", "je suis qui", "mon profil", "c'est quoi mon profil"]):
         if 'profile' in entities:
-            response = f"👤 Vous êtes **{entities['profile']}**."
+            response = f"Vous êtes **{entities['profile']}**."
             if 'name' in entities:
-                response = f"👤 Vous vous appelez **{entities['name']}** et vous êtes **{entities['profile']}**."
+                response = f"Vous vous appelez **{entities['name']}** et vous êtes **{entities['profile']}**."
             return response
     
     # Questions sur l'email
     if any(word in q_lower for word in ["email", "e-mail", "adresse mail"]):
         if 'email' in entities:
-            return f"📧 Votre email est **{entities['email']}**."
+            return f"Votre email est **{entities['email']}**."
         else:
             return "Je ne connais pas votre email."
     
     # Questions sur le téléphone
     if any(word in q_lower for word in ["téléphone", "numéro", "tel"]):
         if 'phone' in entities:
-            return f"📞 Votre numéro est **{entities['phone']}**."
+            return f"Votre numéro est **{entities['phone']}**."
         else:
             return "Je ne connais pas votre numéro de téléphone."
     
@@ -491,15 +491,15 @@ def _detect_inappropriate_content(question: str) -> Optional[str]:
         if re.search(pattern, q_lower, re.IGNORECASE):
             logger.warning(f"Comparaison détectée : {question[:50]}...")
             return (
-                "🎓 **IMT Dakar - Politique de neutralité**\n\n"
+                "**IMT Dakar - Politique de neutralité**\n\n"
                 "Je ne peux pas comparer l'Institut Mines-Télécom Dakar avec d'autres établissements. "
                 "Chaque école a ses propres atouts et spécificités.\n\n"
-                "✨ **Je peux vous informer sur :**\n"
+                "**Je peux vous informer sur :**\n"
                 "• Les programmes et formations de l'IMT Dakar\n"
                 "• Les admissions et modalités d'inscription\n"
                 "• Les infrastructures et services disponibles\n"
                 "• Les contacts de l'administration\n\n"
-                "💡 Comment puis-je vous aider à mieux connaître l'IMT Dakar ?"
+                "Comment puis-je vous aider à mieux connaître l'IMT Dakar ?"
             )
     
     # 2. Détection des insultes et dénigrement
@@ -523,14 +523,14 @@ def _detect_inappropriate_content(question: str) -> Optional[str]:
         if keyword in q_lower:
             logger.warning(f"Insulte/dénigrement détecté : {question[:50]}...")
             return (
-                "🙏 **Message important**\n\n"
+                "**Message important**\n\n"
                 "Je ne peux pas répondre à ce type de message. "
                 "Je suis ici pour vous aider de manière constructive et respectueuse.\n\n"
-                "✨ **Je suis à votre disposition pour :**\n"
+                "**Je suis à votre disposition pour :**\n"
                 "• Répondre à vos questions sur l'IMT Dakar\n"
                 "• Vous orienter vers les bons interlocuteurs\n"
                 "• Vous fournir des informations fiables\n\n"
-                "💡 Reformulez votre demande de manière respectueuse, je serai ravi de vous aider !"
+                "Reformulez votre demande de manière respectueuse, je serai ravi de vous aider !"
             )
     
     # 3. Détection de propos offensants généraux
@@ -550,10 +550,10 @@ def _detect_inappropriate_content(question: str) -> Optional[str]:
         if re.search(pattern, q_lower, re.IGNORECASE):
             logger.warning(f"Propos offensant détecté : {question[:50]}...")
             return (
-                "🛑 **Contenu inapproprié**\n\n"
+                "**Contenu inapproprié**\n\n"
                 "Je ne peux pas répondre à ce type de message. "
                 "Restons dans un échange respectueux et constructif.\n\n"
-                "✨ Je suis un assistant virtuel conçu pour vous aider avec des informations sur l'IMT Dakar. "
+                "Je suis un assistant virtuel conçu pour vous aider avec des informations sur l'IMT Dakar. "
                 "Reformulez votre question de manière polie et je serai heureux de vous assister."
             )
     
@@ -582,17 +582,17 @@ def agent(question: str, history: list = None, memory_manager=None, session_id: 
         if personal_info:
             for entity_type, value in personal_info.items():
                 memory_manager.set_entity(session_id, entity_type, value)
-                logger.info(f"✅ Entité stockée : {entity_type} = {value}")
+                logger.info(f"Entité stockée : {entity_type} = {value}")
             
             # Répondre à la confirmation
             if 'name' in personal_info:
-                return f"👋 Enchanté **{personal_info['name']}** ! Je vais me souvenir de votre nom."
+                return f"Enchanté **{personal_info['name']}** ! Je vais me souvenir de votre nom."
             elif 'profile' in personal_info:
-                return f"✅ J'ai bien noté : vous êtes **{personal_info['profile']}**."
+                return f"J'ai bien noté : vous êtes **{personal_info['profile']}**."
             elif 'email' in personal_info:
-                return f"✅ J'ai bien noté votre email : **{personal_info['email']}**"
+                return f"J'ai bien noté votre email : **{personal_info['email']}**"
             elif 'phone' in personal_info:
-                return f"✅ J'ai bien noté votre numéro : **{personal_info['phone']}**"
+                return f"J'ai bien noté votre numéro : **{personal_info['phone']}**"
     
     # 3. Vérifier si c'est une question personnelle
     if memory_manager and session_id:
@@ -743,13 +743,13 @@ RÉPONSE :"""
             logger.debug(f"LLM reformulation failed: {e}")
     
     # Fallback intelligent : extraire le meilleur paragraphe du contexte
-    logger.info("💡 Utilisation du fallback intelligent (extraction directe)")
+    logger.info("Utilisation du fallback intelligent (extraction directe)")
     lines = [l.strip() for l in context.split('\n') if l.strip() and len(l.strip()) > 40]
     if lines:
         # Retourner les 3 premières lignes pertinentes avec formatage
         result = '\n\n'.join(lines[:3])
-        return f"📚 D'après nos documents :\n\n{result}\n\n💡 Pour plus d'informations, contactez l'administration de l'IMT Dakar."
-    return f"📚 Voici ce que j'ai trouvé :\n\n{context[:500]}\n\n💡 Pour plus d'informations, contactez l'administration."
+        return f"D'après nos documents :\n\n{result}\n\nPour plus d'informations, contactez l'administration de l'IMT Dakar."
+    return f"Voici ce que j'ai trouvé :\n\n{context[:500]}\n\nPour plus d'informations, contactez l'administration."
 
 import chainlit as cl
 import uuid

@@ -42,7 +42,7 @@ def fill_contact_form(
             
             # Naviguer vers la page de contact
             page.goto(CONTACT_URL, wait_until="domcontentloaded", timeout=30000)
-            logger.info("✅ Page chargée")
+            logger.info("Page chargée")
             
             # Attendre que le formulaire soit visible
             page.wait_for_selector("form, input[type='text'], input[type='email']", timeout=10000)
@@ -61,7 +61,7 @@ def fill_contact_form(
             for selector in name_selectors:
                 if page.query_selector(selector):
                     page.fill(selector, name)
-                    logger.info(f"✅ Nom rempli: {name}")
+                    logger.info(f"Nom rempli: {name}")
                     break
             
             # Champ Email
@@ -74,7 +74,7 @@ def fill_contact_form(
             for selector in email_selectors:
                 if page.query_selector(selector):
                     page.fill(selector, email)
-                    logger.info(f"✅ Email rempli: {email}")
+                    logger.info(f"Email rempli: {email}")
                     break
             
             # Champ Téléphone (optionnel)
@@ -89,7 +89,7 @@ def fill_contact_form(
                 for selector in phone_selectors:
                     if page.query_selector(selector):
                         page.fill(selector, phone)
-                        logger.info(f"✅ Téléphone rempli: {phone}")
+                        logger.info(f"Téléphone rempli: {phone}")
                         break
             
             # Champ Sujet
@@ -103,7 +103,7 @@ def fill_contact_form(
             for selector in subject_selectors:
                 if page.query_selector(selector):
                     page.fill(selector, subject)
-                    logger.info(f"✅ Sujet rempli: {subject}")
+                    logger.info(f"Sujet rempli: {subject}")
                     break
             
             # Champ Message
@@ -117,7 +117,7 @@ def fill_contact_form(
             for selector in message_selectors:
                 if page.query_selector(selector):
                     page.fill(selector, message)
-                    logger.info(f"✅ Message rempli ({len(message)} caractères)")
+                    logger.info(f"Message rempli ({len(message)} caractères)")
                     break
             
             # Soumettre le formulaire
@@ -138,7 +138,7 @@ def fill_contact_form(
                     break
             
             if not submitted:
-                logger.warning("⚠️ Bouton submit non trouvé, tentative avec Enter")
+                logger.warning("Bouton submit non trouvé, tentative avec Enter")
                 page.keyboard.press("Enter")
             
             # Attendre la confirmation (message de succès ou redirection)
@@ -147,14 +147,14 @@ def fill_contact_form(
                     "text=/merci|thank you|envoyé|succès|success/i",
                     timeout=5000
                 )
-                logger.info("✅ Confirmation reçue")
+                logger.info("Confirmation reçue")
             except PlaywrightTimeout:
-                logger.warning("⚠️ Pas de message de confirmation visible (timeout)")
+                logger.warning("Pas de message de confirmation visible (timeout)")
             
             # Fermer le navigateur
             browser.close()
             
-            return f"""✅ **Formulaire de contact soumis avec succès !**
+            return f"""**Formulaire de contact soumis avec succès !**
 
 📝 Informations envoyées :
 - **Nom** : {name}
@@ -162,30 +162,30 @@ def fill_contact_form(
 - **Sujet** : {subject}
 - **Message** : {message[:100]}{'...' if len(message) > 100 else ''}
 
-📧 L'administration de l'IMT vous contactera prochainement.
+L'administration de l'IMT vous contactera prochainement.
 """
     
     except PlaywrightTimeout as e:
-        logger.error(f"❌ Timeout : {e}")
-        return f"""❌ **Erreur : Timeout lors du remplissage du formulaire**
+        logger.error(f"Timeout : {e}")
+        return f"""**Erreur : Timeout lors du remplissage du formulaire**
 
 Le site web de l'IMT n'a pas répondu à temps. Causes possibles :
 - Connexion Internet lente
 - Site web temporairement indisponible
 - Formulaire protégé par CAPTCHA
 
-💡 **Alternative** : Vous pouvez contacter l'IMT directement par :
+**Alternative** : Vous pouvez contacter l'IMT directement par :
 - Email : contact@imt.sn
 - Téléphone : +221 33 859 73 73
 """
     
     except Exception as e:
-        logger.error(f"❌ Erreur Playwright : {e}")
-        return f"""❌ **Erreur lors du remplissage du formulaire**
+        logger.error(f"Erreur Playwright : {e}")
+        return f"""**Erreur lors du remplissage du formulaire**
 
 Erreur technique : {str(e)}
 
-💡 **Alternative** : Contactez l'IMT directement :
+**Alternative** : Contactez l'IMT directement :
 - Email : contact@imt.sn
 - Téléphone : +221 33 859 73 73
 - Site web : https://www.imt.sn/contact/

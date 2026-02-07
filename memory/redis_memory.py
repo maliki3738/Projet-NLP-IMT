@@ -20,9 +20,9 @@ class RedisMemory:
             self.r.ping()  # Test connection
             self.redis_available = True
             self.current_session = None
-            print("✅ Redis connecté - Multi-sessions avec TTL 1h disponible")
+            print("Redis connecté - Multi-sessions avec TTL 1h disponible")
         except Exception as e:
-            print(f"⚠️  Redis non disponible ({e}), utilisation de la mémoire en RAM.")
+            print(f" Redis non disponible ({e}), utilisation de la mémoire en RAM.")
             self.redis_available = False
             self.memory = {}  # Fallback in-memory dict
             self.sessions_meta = {}  # Métadonnées des sessions en RAM
@@ -62,7 +62,7 @@ class RedisMemory:
                 
                 if oldest:
                     self.delete_session(oldest)
-                    print(f"⚠️  Session {oldest} supprimée (limite de {self.MAX_SESSIONS} atteinte)")
+                    print(f" Session {oldest} supprimée (limite de {self.MAX_SESSIONS} atteinte)")
             
             # Créer la nouvelle session
             self.r.sadd(self._get_sessions_key(), session_id)
@@ -93,7 +93,7 @@ class RedisMemory:
                 oldest = min(self.sessions_meta.keys(), key=lambda s: self.sessions_meta[s]["created_at"])
                 del self.memory[oldest]
                 del self.sessions_meta[oldest]
-                print(f"⚠️  Session {oldest} supprimée (limite RAM de {self.MAX_SESSIONS} atteinte)")
+                print(f" Session {oldest} supprimée (limite RAM de {self.MAX_SESSIONS} atteinte)")
             
             self.memory[session_id] = []
             self.sessions_meta[session_id] = {
