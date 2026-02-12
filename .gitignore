@@ -8,3 +8,8 @@ data/
 *.sqlite3
 __pycache__/
 venv_old/
+
+# Fichiers de logs
+*.log
+*Terminal*.txt
+logs/
