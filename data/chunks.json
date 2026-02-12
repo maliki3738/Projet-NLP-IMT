@@ -1,11 +1,11 @@
 [
   {
     "source": "institut_mines_telecom.txt",
-    "content": "📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "institut_mines_telecom.txt",
-    "content": "📞 Téléphone : 177033442, 951267644, 208821090, 761625271, 956324859, 538841977, 18.048 18.24, 074122102, 237744427, 088985906"
+    "content": "📞 Téléphone : 761625271, 237744427, 538841977, 208821090, 074122102, 951267644, 956324859, 088985906, 18.048 18.24, 177033442"
   },
   {
     "source": "institut_mines_telecom.txt",
@@ -113,11 +113,11 @@
   },
   {
     "source": "accueil.txt",
-    "content": "📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "accueil.txt",
-    "content": "📞 Téléphone : 174246449, 732800583, 18.048 18.24, 468507033, 731530081, 804762009, 382152698, 174246448, 014126387, 427418726, 727327535, 730083207, 726568522, 251886899, 203358434, 729321435, 954403430, 021135257, 730012014, 732328113, 115679386, 181032115, 530254540, 729354296, 868209971, 729247680, 731104307, 755138252, 603816960, 134885478, 177032955"
+    "content": "📞 Téléphone : 730012014, 134885478, 804762009, 732328113, 468507033, 251886899, 177032955, 427418726, 730083207, 021135257, 18.048 18.24, 174246448, 729247680, 732800583, 115679386, 729321435, 174246449, 530254540, 731104307, 755138252, 731530081, 203358434, 603816960, 382152698, 868209971, 727327535, 954403430, 726568522, 181032115, 729354296, 014126387"
   },
   {
     "source": "accueil.txt",
@@ -169,11 +169,11 @@
   },
   {
     "source": "formations_generale.txt",
-    "content": "📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "formations_generale.txt",
-    "content": "📞 Téléphone : 177035454, 174246449, 174246448, 243829770, 741956765, 18.048 18.24, 177032955, 088985906"
+    "content": "📞 Téléphone : 177035454, 741956765, 174246449, 088985906, 18.048 18.24, 174246448, 177032955, 243829770"
   },
   {
     "source": "formations_generale.txt",
@@ -245,39 +245,67 @@
   },
   {
     "source": "contact.txt",
-    "content": "📍 Adresse : Institut Mines-Télécom Dakar\nkm1 Avenue Cheikh Anta Diop\nDakar, Sénégal"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "contact.txt",
-    "content": "📞 Téléphones :\n+221 33 859 73 73\n+221 77 495 96 85"
+    "content": "📞 Téléphone : 177035865, +221774959685, 214760535, 18.048 18.24, 337727141"
   },
   {
     "source": "contact.txt",
-    "content": "🕐 Horaires : Lundi-Vendredi 8h-17h"
+    "content": "Laissez-nous un message ci-dessous  :"
   },
   {
     "source": "contact.txt",
-    "content": "💬 Pour toute demande d'information sur nos formations, les admissions ou notre campus, contactez-nous par email ou téléphone."
+    "content": "Institut Carnot Télécom & Société numérique"
   },
   {
     "source": "contact.txt",
-    "content": "🌐 Site web : https://www.imt.sn\n📝 Formulaire : https://www.imt.sn/contact/"
+    "content": "Filiales, écoles associées ou sous convention"
   },
   {
     "source": "contact.txt",
-    "content": "🚗 Localisation : km1 Avenue Cheikh Anta Diop, Dakar. Facilement accessible en transport en commun."
+    "content": "Ce site utilise des cookies. Vous avez la possibilité d'accepter ou de refuser leur utilisation."
   },
   {
     "source": "contact.txt",
-    "content": "💼 Partenariats : partenariats@imt.sn"
+    "content": "Cliquez sur les différentes rubriques de la catégorie pour en savoir plus. Vous pouvez également modifier certaines de vos préférences. Notez que le blocage de certains types de cookies peut avoir une incidence sur votre expérience sur nos sites Web et les services que nous sommes en mesure d’offrir."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Ces cookies sont strictement nécessaires pour vous délivrer les services disponibles sur notre site et pour utiliser certaines de ses fonctionnalités."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Nous vous fournissons une liste de cookies déposés sur votre ordinateur via notre domaine, vous pouvez ainsi voir ce qui y est stocké. Pour des raisons de sécurité nous ne pouvons montrer ou afficher les cookies externes d’autres domaines. Ceux-ci sont accessibles via les options de votre navigateur."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Cochez pour activer le masquage permanent de la barre d’acceptation / refus des cookies si vous ne les acceptez pas. 2 cookies seront nécessaires pour mémoriser ce choix. Sans quoi le message apparaitrait à nouveau à chaque page ou fenêtre."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Ces cookies collectent des informations de manière compilée pour nous aider à comprendre comment notre site est utilisé et combien son performantes nos actions marketing, ou pour nous aider à personnaliser notre site afin d’améliorer votre expérience de navigation."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Cliquer pour activer/désactiver les polices Google Fonts."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Cliquez pour activer/désactiver l’incorporation de vidéos."
+  },
+  {
+    "source": "contact.txt",
+    "content": "Les cookies suivants sont également requis - Vous pouvez choisir d’autoriser leur utilisation :"
   },
   {
     "source": "qui_sommes_nous.txt",
-    "content": "📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "qui_sommes_nous.txt",
-    "content": "📞 Téléphone : 177033443, 11.456-11.90, 14.464 27.84, 12.544 12.60, 807115234, 11.456 11.90, 12.544-12.60, 18.048 18.24, 11.456-11.84, 909543211, 159260639, 944061865, 669037398"
+    "content": "📞 Téléphone : 12.544-12.60, 944061865, 159260639, 11.456 11.90, 909543211, 177033443, 12.544 12.60, 669037398, 11.456-11.84, 11.456-11.90, 18.048 18.24, 807115234, 14.464 27.84"
   },
   {
     "source": "qui_sommes_nous.txt",
@@ -401,87 +429,135 @@
   },
   {
     "source": "formations.txt",
-    "content": "🎓 Parcours de formation à l'IMT Dakar"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "formations.txt",
-    "content": "🧱 ANNÉE 1 : Tronc commun\nUne première année commune à tous les étudiants, servant de base scientifique et technique avant la spécialisation."
+    "content": "📞 Téléphone : 177035454, 174246449, 088985906, 18.048 18.24, 174246448, 177032955"
   },
   {
     "source": "formations.txt",
-    "content": "🔀 ANNÉE 2 : Choix de filière\nÀ l'issue du tronc commun, deux grandes filières sont proposées :\n1. Filière Numérique\n2. Filière Énergie et Génie civil"
+    "content": "Bachelor Sciences et Ingénierie du Numérique : IoT, cyber & cloud"
   },
   {
     "source": "formations.txt",
-    "content": "🎓 ANNÉE 3 : Bachelor Sciences et Ingénierie (spécialisations)"
+    "content": "Devenez acteurs de la transition numérique !"
   },
   {
     "source": "formations.txt",
-    "content": "═══════════════════════════════════════════\n🔹 FILIÈRE NUMÉRIQUE\nBachelor Sciences et Ingénierie – Numérique\n═══════════════════════════════════════════"
+    "content": "Ce bachelor en 3 ans s’adresse aux bacheliers de série Scientifique et vise à répondre aux besoins des entreprises en ingénierie numérique, en particulier dans les domaines des réseaux,  des services cloud, de l’Internet des Objets et de leur sécurisation, à un niveau cadre intermédiaire, pour accompagner la transformation numérique dans un contexte de transition écologique."
   },
   {
     "source": "formations.txt",
-    "content": "Spécialités proposées :\n• IoT (Internet des Objets)\n• Cybersécurité\n• Cloud Computing"
+    "content": "Un cursus innovant par apprentissage"
   },
   {
     "source": "formations.txt",
-    "content": "Programme :\n- Ce bachelor en 3 ans s'adresse aux bacheliers de série Scientifique\n- Stage de 2 mois en 2ème année\n- 3ème année en apprentissage\n- Formation axée sur les réseaux, services cloud, Internet des Objets et leur sécurisation"
+    "content": "Le programme se compose de 6 semestres incluant  :"
   },
   {
     "source": "formations.txt",
-    "content": "Débouchés professionnels :\n• Développeur d'applications web et mobile\n• Technicien / Architecte réseau\n• Technicien cloud ou support IT\n• Assistant chef de projet numérique\n• Assistant chef de projet en cybersécurité\n• Analyste cybersécurité\n• Concepteur et intégrateur d'objets connectés\n• Technicien base de données\n• Assistant product manager IA\n• Technicien robotique\n• Gestionnaire de parc informatique\n• Conseiller support technique\n• Chargé de projet digital\n• Gestionnaire de site web"
+    "content": "un stage de 2 mois en 2ème année"
   },
   {
     "source": "formations.txt",
-    "content": "═══════════════════════════════════════════\n🔹 FILIÈRE ÉNERGIE\nBachelor Sciences et Ingénierie – Option Transition énergétique\n═══════════════════════════════════════════"
+    "content": "une 3ème année en apprentissage"
   },
   {
     "source": "formations.txt",
-    "content": "Objectifs :\nFormation axée sur les énergies renouvelables et la transition énergétique pour accompagner le développement durable."
+    "content": "La recherche de stage et de l’entreprise d’accueil en apprentissage est facilitée grâce au réseau de partenaires de l’Institut Mines-Télécom au Sénégal."
   },
   {
     "source": "formations.txt",
-    "content": "Débouchés professionnels :\n• Technicien en énergies renouvelables\n• Analyste en performance énergétique\n• Assistant chef de projet en transition énergétique\n• Conseiller en efficacité énergétique\n• Technicien maintenance systèmes énergétiques"
+    "content": "» La 3ème année d’études est proposée en alternance pour permettre aux étudiants d’acquérir une première expérience et faciliter ainsi leur insertion professionnelle «"
   },
   {
     "source": "formations.txt",
-    "content": "═══════════════════════════════════════════\n🔹 FILIÈRE GÉNIE CIVIL\nBachelor Sciences et Ingénierie – Option Génie civil et construction durable\n═══════════════════════════════════════════"
+    "content": "Département Systèmes, réseaux, cybersécurité et droit du numérique à IMT Atlantique"
   },
   {
     "source": "formations.txt",
-    "content": "Objectifs :\nFormation dédiée à la construction durable et aux infrastructures respectueuses de l'environnement."
+    "content": "Le programme permet une intégration rapide au monde professionnel dans les métiers suivants :"
   },
   {
     "source": "formations.txt",
-    "content": "Débouchés professionnels :\n• Assistant en ingénierie de la construction durable\n• Technicien en diagnostic des bâtiments\n• Contrôleur technique dans la construction\n• Conseiller en éco-construction\n• Technicien BIM (Building Information Modeling)\n• Assistant conducteur de travaux"
+    "content": "Développeur d’applications web et mobile"
   },
   {
     "source": "formations.txt",
-    "content": "💼 INSERTION PROFESSIONNELLE\nLes formations mènent directement au marché du travail selon la spécialité choisie."
+    "content": "Technicien / Architecte réseau"
   },
   {
     "source": "formations.txt",
-    "content": "📚 POURSUITE D'ÉTUDES\nPossibilité de poursuivre les études :\n• Dans une école de l'IMT en France (statut étudiant ou apprentissage)\n• Dans une école d'ingénieurs partenaire\n• Dans une école de commerce"
+    "content": "Assistant chef de projet en cybersécurité"
   },
   {
     "source": "formations.txt",
-    "content": "🔁 MODALITÉ PARTICULIÈRE : ALTERNANCE\nLa 3ème année est proposée en alternance pour :\n• Permettre aux étudiants d'acquérir une première expérience professionnelle\n• Faciliter leur insertion sur le marché du travail\n• Bénéficier du réseau de partenaires de l'IMT au Sénégal"
+    "content": "Concepteur et intégrateur d’objets connectés"
   },
   {
     "source": "formations.txt",
-    "content": "🌍 CONTEXTE ET ENJEUX\nCes programmes répondent aux besoins croissants en compétences dans les secteurs clés :\n• Transformation numérique\n• Transition énergétique\n• Construction durable\n• Développement socio-économique du Sénégal et de l'Afrique"
+    "content": "Assistant chef de projet / technicien cybersécurité"
   },
   {
     "source": "formations.txt",
-    "content": "Ils proposent un solide socle scientifique permettant une insertion professionnelle rapide ou une poursuite d'études."
+    "content": "Gestionnaire de parc informatique"
+  },
+  {
+    "source": "formations.txt",
+    "content": "La poursuite d’études est également possible dans une école de commerce ou d’ingénieurs, notamment dans les écoles de l’IMT en France ouvertes à l’apprentissage."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Institut Carnot Télécom & Société numérique"
+  },
+  {
+    "source": "formations.txt",
+    "content": "Filiales, écoles associées ou sous convention"
+  },
+  {
+    "source": "formations.txt",
+    "content": "Ce site utilise des cookies. Vous avez la possibilité d'accepter ou de refuser leur utilisation."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Cliquez sur les différentes rubriques de la catégorie pour en savoir plus. Vous pouvez également modifier certaines de vos préférences. Notez que le blocage de certains types de cookies peut avoir une incidence sur votre expérience sur nos sites Web et les services que nous sommes en mesure d’offrir."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Ces cookies sont strictement nécessaires pour vous délivrer les services disponibles sur notre site et pour utiliser certaines de ses fonctionnalités."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Nous vous fournissons une liste de cookies déposés sur votre ordinateur via notre domaine, vous pouvez ainsi voir ce qui y est stocké. Pour des raisons de sécurité nous ne pouvons montrer ou afficher les cookies externes d’autres domaines. Ceux-ci sont accessibles via les options de votre navigateur."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Cochez pour activer le masquage permanent de la barre d’acceptation / refus des cookies si vous ne les acceptez pas. 2 cookies seront nécessaires pour mémoriser ce choix. Sans quoi le message apparaitrait à nouveau à chaque page ou fenêtre."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Ces cookies collectent des informations de manière compilée pour nous aider à comprendre comment notre site est utilisé et combien son performantes nos actions marketing, ou pour nous aider à personnaliser notre site afin d’améliorer votre expérience de navigation."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Cliquer pour activer/désactiver les polices Google Fonts."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Cliquez pour activer/désactiver l’incorporation de vidéos."
+  },
+  {
+    "source": "formations.txt",
+    "content": "Les cookies suivants sont également requis - Vous pouvez choisir d’autoriser leur utilisation :"
   },
   {
     "source": "Edulab.txt",
-    "content": "📧 Contact : logo-mste@2x.webp, logo-eurecom@2x.png, logo-tsp@2x.webp, logo-imta@2x.webp, logo-tp@2x.webp, logo-insic@2x.png, logo-gfaif@2x.png, logo-imtbs@2x.webp, logo-imtne@2x.webp, logo-aidf@2x.png, logo-males@2x.webp, logo-carnot@2x.png, logo-minefi@2x.png, logo-malbi@2x.webp"
+    "content": "📧 Contact : logo-eurecom@2x.png, logo-minefi@2x.png, logo-carnot@2x.png, logo-mste@2x.webp, logo-tsp@2x.webp, logo-insic@2x.png, logo-tp@2x.webp, logo-imtne@2x.webp, logo-malbi@2x.webp, logo-aidf@2x.png, logo-gfaif@2x.png, logo-males@2x.webp, logo-imtbs@2x.webp, logo-imta@2x.webp"
   },
   {
     "source": "Edulab.txt",
-    "content": "📞 Téléphone : 00019-1125, 00027-1152, 174246449, 12.544 12.60, 00017-1536, 00014-1536, 18.048 18.24, 00017-1030, 00006-1536, 11.456-11.90, 167786245, 00019-1152, 174246448, 00026-1125, 00014-1500, 00017-1500, 00023-1500, 14.464 27.84, 177034401, 31.1143270, 00014-1030, 090572900, 00028-1152, 00028-1125, 00023-1030, 00006-1030, 00026-1152, 00006-1500, 00027-1125, 11.456 11.90, 12.544-12.60, 00023-1536, 11.456-11.84, 177032955"
+    "content": "📞 Téléphone : 00027-1125, 00023-1500, 00027-1152, 12.544 12.60, 00028-1125, 177032955, 00019-1125, 00026-1125, 00026-1152, 00014-1030, 00019-1152, 00017-1536, 18.048 18.24, 174246448, 167786245, 00017-1500, 00028-1152, 090572900, 12.544-12.60, 00017-1030, 00006-1536, 174246449, 11.456 11.90, 11.456-11.90, 00023-1030, 00014-1536, 14.464 27.84, 31.1143270, 00006-1030, 177034401, 11.456-11.84, 00014-1500, 00006-1500, 00023-1536"
   },
   {
     "source": "Edulab.txt",

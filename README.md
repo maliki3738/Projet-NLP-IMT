@@ -421,6 +421,13 @@ pytest tests/test_tools.py -v      # Tests outils
 
 ---
 
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Gemini](https://img.shields.io/badge/LLM-Gemini-red)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Stars](https://img.shields.io/github/stars/maliki3738/Projet-NLP-IMT?style=social)
+
+---
+
 <div align="center">
   <strong>Développé avec ❤️ pour l'IMT Dakar</strong><br>
   <sub>Projet NLP - Formation Ingénieur 2026</sub>
